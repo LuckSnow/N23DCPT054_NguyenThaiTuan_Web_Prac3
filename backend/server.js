@@ -71,6 +71,16 @@ app.post('/api/products', async (req, res) => {
       id: Date.now(),
       name: String(name).trim(),
       price: Number(price),
+      category: req.body.category || 'Thời trang',
+      images: req.body.images || [
+        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1527719327859-c6ce80353573?auto=format&fit=crop&w=800&q=80'
+      ],
+      description: req.body.description || 'Sản phẩm mới tuyển chọn từ MỘC Studio, thiết kế tinh tế và chất liệu cao cấp.',
+      colors: req.body.colors || ['Đen', 'Trắng'],
+      sizes: req.body.sizes || ['M', 'L', 'XL']
     };
     data.products.push(newProduct);
     await writeData(data);
@@ -83,7 +93,7 @@ app.post('/api/products', async (req, res) => {
 // PUT: Cập nhật thông tin sản phẩm (Nâng cao 1)
 app.put('/api/products/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { name, price } = req.body;
+  const { name, price, category, description } = req.body;
 
   try {
     const data = await readData();
@@ -97,6 +107,8 @@ app.put('/api/products/:id', async (req, res) => {
       ...data.products[index],
       ...(name ? { name: String(name).trim() } : {}),
       ...(price !== undefined ? { price: Number(price) } : {}),
+      ...(category ? { category: String(category).trim() } : {}),
+      ...(description ? { description: String(description).trim() } : {}),
     };
 
     await writeData(data);
@@ -143,6 +155,8 @@ app.get('/api/cart', async (req, res) => {
         name: product ? product.name : 'Sản phẩm không còn bán',
         price: product ? product.price : 0,
         subtotal: (product ? product.price : 0) * cartItem.quantity,
+        category: product ? product.category : 'Thời trang',
+        image: product && product.images && product.images.length > 0 ? product.images[0] : null,
       };
     });
 

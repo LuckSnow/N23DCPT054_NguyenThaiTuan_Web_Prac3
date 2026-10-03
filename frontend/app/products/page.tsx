@@ -3,11 +3,13 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { getProductMeta } from '../lib/productData';
 
 type Product = {
   id: number;
@@ -25,6 +27,7 @@ const sampleImages = [
 ];
 
 export default function ProductsCatalogPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
@@ -300,13 +303,18 @@ export default function ProductsCatalogPage() {
             ) : (
               <div className="products-grid-4">
                 {filteredProducts.map((product, idx) => {
-                  const img = sampleImages[idx % sampleImages.length];
+                  const meta = getProductMeta(product);
                   const isFavorite = wishlist.includes(product.id);
                   return (
-                    <article className="modern-product-card" key={product.id}>
+                    <article
+                      className="modern-product-card"
+                      key={product.id}
+                      onClick={() => router.push(`/products/${product.id}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className="product-img-box">
                         <Image
-                          src={img}
+                          src={meta.mainImage}
                           alt={product.name}
                           width={600}
                           height={600}
@@ -318,7 +326,10 @@ export default function ProductsCatalogPage() {
                           <button
                             type="button"
                             className="icon-action-pill btn-wishlist"
-                            onClick={() => toggleWishlist(product.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleWishlist(product.id);
+                            }}
                             aria-label="Yêu thích"
                             title="Lưu vào yêu thích"
                           >
@@ -329,7 +340,8 @@ export default function ProductsCatalogPage() {
                           <button
                             type="button"
                             className="icon-action-pill btn-edit"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setEditingProduct(product);
                               setEditName(product.name);
                               setEditPrice(String(product.price));
@@ -345,7 +357,8 @@ export default function ProductsCatalogPage() {
                           <button
                             type="button"
                             className="icon-action-pill btn-delete"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (window.confirm(`Bạn chắc chắn muốn xoá sản phẩm "${product.name}"?`)) {
                                 deleteMutation.mutate(product.id);
                               }
@@ -361,10 +374,10 @@ export default function ProductsCatalogPage() {
                       </div>
 
                       <div className="product-card-body">
-                        <span className="product-card-cat">MỘC STUDIO · BỘ SƯU TẬP</span>
-                        <Link href={`/products/${product.id}`} className="product-card-title">
+                        <span className="product-card-cat">{meta.category.toUpperCase()}</span>
+                        <div className="product-card-title">
                           {product.name}
-                        </Link>
+                        </div>
                         <div className="product-price-row">
                           <span className="current-price">{Number(product.price).toLocaleString('vi-VN')}₫</span>
                           <span className="original-price">{Number(product.price * 1.25).toLocaleString('vi-VN')}₫</span>
@@ -373,7 +386,10 @@ export default function ProductsCatalogPage() {
                           <button
                             type="button"
                             className="btn-card-add"
-                            onClick={() => addToCartMutation.mutate(product.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCartMutation.mutate(product.id);
+                            }}
                           >
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
                               <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />

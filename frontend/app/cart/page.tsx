@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { getProductMeta } from '../lib/productData';
 
 type CartItem = {
   productId: number;
@@ -21,21 +22,6 @@ type CartResponse = {
   items: CartItem[];
   totalQuantity: number;
   totalPrice: number;
-};
-
-const imageMap: Record<number, string> = {
-  1: 'photo-1542291026-7eec264c27ff',
-  2: 'photo-1521572163474-6864f9cf17ab',
-  3: 'photo-1553062407-98eeb64c6a62',
-  4: 'photo-1542272604-787c3835535d',
-};
-
-// Realistic variant mapping for items
-const variantMap: Record<number, { color: string; size: string; category: string }> = {
-  1: { color: 'Black', size: '41', category: 'Running Shoes' },
-  2: { color: 'White', size: 'M', category: 'Cotton T-Shirt' },
-  3: { color: 'Black', size: 'One Size', category: 'Accessories' },
-  4: { color: 'Blue', size: '31', category: 'Slim Denim' },
 };
 
 const SHIPPING_FEE = 30000; // 30.000đ
@@ -183,36 +169,39 @@ export default function ShoppingCartPage() {
             {/* LEFT: Cart item list (65%) */}
             <div className="cart-items-wrapper">
               {cart.items.map((item) => {
-                const imgKey = imageMap[item.productId] || 'photo-1542291026-7eec264c27ff';
-                const variants = variantMap[item.productId] || {
-                  color: 'Black',
-                  size: '41',
-                  category: 'Sản phẩm',
-                };
+                const meta = getProductMeta({ id: item.productId, name: item.name, price: item.price });
+                const itemColor = meta.colors && meta.colors.length > 0 ? meta.colors[0] : 'Tiêu chuẩn';
+                const itemSize = meta.sizes && meta.sizes.length > 0 ? meta.sizes[0] : 'M';
                 const isSavedWishlist = wishlistItems.includes(item.productId);
 
                 return (
                   <article className="cart-item-modern" key={item.productId}>
                     {/* 5. PRODUCT IMAGE (120x120, square, neutral background, 12px radius) */}
                     <div className="cart-item-media">
-                      <Image
-                        src={`https://images.unsplash.com/${imgKey}?auto=format&fit=crop&w=360&q=80`}
-                        alt={item.name}
-                        width={120}
-                        height={120}
-                        unoptimized
-                      />
+                      <Link href={`/products/${item.productId}`} className="block w-full h-full">
+                        <Image
+                          src={meta.mainImage}
+                          alt={item.name}
+                          width={120}
+                          height={120}
+                          className="w-full h-full object-cover rounded-xl"
+                          unoptimized
+                        />
+                      </Link>
                     </div>
 
                     {/* PRODUCT INFORMATION */}
                     <div className="cart-item-center">
+                      <span className="text-xs font-semibold text-[#8E8E8E] uppercase tracking-wider mb-1">
+                        {meta.category}
+                      </span>
                       <Link href={`/products/${item.productId}`} className="cart-item-name">
                         {item.name}
                       </Link>
                       <div className="cart-item-variants">
-                        <span>Color: {variants.color}</span>
+                        <span>Color: {itemColor}</span>
                         <span>•</span>
-                        <span>Size: {variants.size}</span>
+                        <span>Size: {itemSize}</span>
                       </div>
                       <div className="cart-item-unit-price">
                         <strong>{Number(item.price).toLocaleString('vi-VN')}đ</strong>
