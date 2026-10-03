@@ -213,6 +213,33 @@ app.delete('/api/cart/:productId', async (req, res) => {
   }
 });
 
+// PUT: Cập nhật số lượng sản phẩm trong giỏ
+app.put('/api/cart/:productId', async (req, res) => {
+  const productId = Number(req.params.productId);
+  const { quantity } = req.body;
+  const numQty = Number(quantity);
+
+  try {
+    const data = await readData();
+    const index = data.cart.findIndex((c) => c.productId === productId);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Sản phẩm không có trong giỏ hàng' });
+    }
+
+    if (numQty <= 0) {
+      data.cart.splice(index, 1);
+    } else {
+      data.cart[index].quantity = numQty;
+    }
+
+    await writeData(data);
+    res.json({ message: 'Cập nhật số lượng thành công', cart: data.cart });
+  } catch (error) {
+    res.status(500).json({ error: 'Lỗi server khi cập nhật giỏ hàng' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Backend chạy tại port :${PORT}`);
 });

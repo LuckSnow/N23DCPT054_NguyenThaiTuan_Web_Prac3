@@ -21,5 +21,10 @@
       "price": 590000
     }
   ],
-  "cart": []
+  "cart": [
+    {
+      "productId": 4,
+      "quantity": 1
+    }
+  ]
 }
