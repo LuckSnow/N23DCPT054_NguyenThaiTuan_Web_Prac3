@@ -20,6 +20,24 @@ app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
+app.post('/api/products', (req, res) => {
+  const { name, price } = req.body;
+
+  // Validation đơn giản
+  if (!name || !price) {
+    return res.status(400).json({ error: 'Thiếu dữ liệu' });
+  }
+
+  const newProduct = {
+    id: Date.now(),
+    name,
+    price: Number(price),
+  };
+
+  products.push(newProduct);
+  res.status(201).json(newProduct);
+});
+
 app.listen(PORT, () => {
   console.log(`Backend chạy tại port :${PORT}`);
 });
