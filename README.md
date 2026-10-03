@@ -58,10 +58,17 @@ fullstack-shop/
 │   ├── app/
 │   │   ├── cart/
 │   │   │   └── page.tsx                    # Trang giỏ hàng /cart (Nâng cao 4)
+│   │   ├── products/
+│   │   │   ├── page.tsx                    # Trang danh mục sản phẩm /products (lọc, sắp xếp)
+│   │   │   └── [id]/
+│   │   │       └── page.tsx                # Trang chi tiết sản phẩm /products/[id] (gallery, size, reviews)
+│   │   ├── components/
+│   │   │   ├── Navbar.tsx                  # Header điều hướng, giỏ hàng badge, tìm kiếm
+│   │   │   └── Footer.tsx                  # Chân trang 4 cột chuyên nghiệp
 │   │   ├── favicon.ico
-│   │   ├── globals.css                     # Hệ thống định kiểu CSS phong cách E-commerce hiện đại
-│   │   ├── layout.tsx                      # RootLayout tích hợp Toaster và QueryClientProvider
-│   │   ├── page.tsx                        # Trang chủ: Hero banner, danh sách, tìm kiếm, CRUD
+│   │   ├── globals.css                     # Hệ thống Design System E-commerce tối giản, hiện đại
+│   │   ├── layout.tsx                      # RootLayout tích hợp Google Font Inter & Toaster
+│   │   ├── page.tsx                        # Trang chủ: Hero 2 cột, Danh mục, Sản phẩm nổi bật, Banner, Newsletter
 │   │   └── providers.tsx                   # TanStack Query Provider bọc toàn bộ ứng dụng
 │   ├── lib/
 │   │   └── api.ts                          # Cấu hình trung tâm Axios Client

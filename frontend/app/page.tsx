@@ -6,6 +6,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 export type Product = {
   id: number;
@@ -13,72 +15,58 @@ export type Product = {
   price: number;
 };
 
-type CartResponse = {
-  items: Array<{ productId: number; quantity: number; subtotal: number }>;
-  totalQuantity: number;
-  totalPrice: number;
-};
-
-const imageOptions = [
-  { src: 'photo-1521572163474-6864f9cf17ab', tone: 'sand', label: 'Áo thun' },
-  { src: 'photo-1542272604-787c3835535d', tone: 'sky', label: 'Quần jeans' },
-  { src: 'photo-1529139574466-a303027c1d8b', tone: 'rose', label: 'Thời trang' },
-  { src: 'photo-1523381210434-271e8be1f52b', tone: 'olive', label: 'Trang phục' },
-  { src: 'photo-1515886657613-9f3515b0c78f', tone: 'lilac', label: 'Phong cách' },
-  { src: 'photo-1525507119028-ed4c629a60a3', tone: 'peach', label: 'Bộ sưu tập' },
+const categoryData = [
+  {
+    name: 'Thời trang',
+    slug: 'fashion',
+    items: '48 sản phẩm',
+    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=720&q=80',
+  },
+  {
+    name: 'Giày dép',
+    slug: 'shoes',
+    items: '24 sản phẩm',
+    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=720&q=80',
+  },
+  {
+    name: 'Túi xách',
+    slug: 'bags',
+    items: '18 sản phẩm',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=720&q=80',
+  },
+  {
+    name: 'Phụ kiện',
+    slug: 'accessories',
+    items: '32 sản phẩm',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=720&q=80',
+  },
 ];
 
-function ProductIcon({ type }: { type: 'bag' | 'search' | 'arrow' | 'close' | 'edit' | 'cart' }) {
-  if (type === 'bag' || type === 'cart') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M5 8h14l1 12H4L5 8Z" />
-        <path d="M9 9V6a3 3 0 0 1 6 0v3" />
-      </svg>
-    );
-  }
-  if (type === 'search') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="10.8" cy="10.8" r="6.3" />
-        <path d="m16 16 4.2 4.2" />
-      </svg>
-    );
-  }
-  if (type === 'close') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="m6 6 12 12M18 6 6 18" />
-      </svg>
-    );
-  }
-  if (type === 'edit') {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M12 20h9" />
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M4.5 12h14m-5.5-5.5L18.5 12 13 17.5" />
-    </svg>
-  );
-}
+const sampleImages = [
+  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=720&q=80',
+  'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=720&q=80',
+  'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=720&q=80',
+  'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=720&q=80',
+  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=720&q=80',
+  'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?auto=format&fit=crop&w=720&q=80',
+];
 
-export default function Home() {
+export default function HomePage() {
   const queryClient = useQueryClient();
 
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
 
-  // Nâng cao 2: React Query - Fetch danh sách sản phẩm với useQuery
+  const [email, setEmail] = useState('');
+  const [wishlist, setWishlist] = useState<number[]>([]);
+
+  // 1. Fetch danh sách sản phẩm (TanStack Query)
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
@@ -87,29 +75,19 @@ export default function Home() {
     },
   });
 
-  // Nâng cao 4: Query giỏ hàng để cập nhật badge số lượng real-time
-  const { data: cartData = { items: [], totalQuantity: 0, totalPrice: 0 } } = useQuery<CartResponse>({
-    queryKey: ['cart'],
-    queryFn: async () => {
-      const res = await api.get<CartResponse>('/api/cart');
-      return res.data;
-    },
-  });
-
-  // Nâng cao 4: Thêm vào giỏ hàng
+  // 2. Thêm vào giỏ hàng (Cart API)
   const addToCartMutation = useMutation({
-    mutationFn: ({ productId, quantity = 1 }: { productId: number; quantity?: number }) =>
-      api.post('/api/cart', { productId, quantity }),
+    mutationFn: (productId: number) => api.post('/api/cart', { productId, quantity: 1 }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success('Đã thêm vào giỏ hàng!', { icon: '🛍️' });
     },
     onError: () => {
-      toast.error('Thêm vào giỏ hàng thất bại!');
+      toast.error('Không thể thêm vào giỏ hàng!');
     },
   });
 
-  // Nâng cao 2: Mutation thêm sản phẩm
+  // 3. Thêm sản phẩm mới (POST)
   const createMutation = useMutation({
     mutationFn: (newProd: { name: string; price: number }) => api.post<Product>('/api/products', newProd),
     onSuccess: () => {
@@ -120,12 +98,11 @@ export default function Home() {
       toast.success('Thêm sản phẩm thành công!');
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.error || 'Có lỗi xảy ra khi thêm sản phẩm!';
-      toast.error(msg);
+      toast.error(err.response?.data?.error || 'Có lỗi xảy ra!');
     },
   });
 
-  // Nâng cao 1 & 2: Mutation cập nhật sản phẩm (PUT)
+  // 4. Sửa sản phẩm (PUT)
   const updateMutation = useMutation({
     mutationFn: ({ id, name, price }: { id: number; name: string; price: number }) =>
       api.put<Product>(`/api/products/${id}`, { name, price }),
@@ -135,12 +112,11 @@ export default function Home() {
       toast.success('Cập nhật sản phẩm thành công!');
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.error || 'Cập nhật thất bại!';
-      toast.error(msg);
+      toast.error(err.response?.data?.error || 'Cập nhật thất bại!');
     },
   });
 
-  // Tiết 4-5 & Nâng cao 2: Mutation xoá sản phẩm
+  // 5. Xoá sản phẩm (DELETE)
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/api/products/${id}`),
     onSuccess: () => {
@@ -149,426 +125,449 @@ export default function Home() {
       toast.success('Đã xoá sản phẩm', { icon: '🗑️' });
     },
     onError: () => {
-      toast.error('Xoá thất bại, thử lại!');
+      toast.error('Xoá thất bại, vui lòng thử lại!');
     },
   });
 
   const visibleProducts = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase('vi');
-    if (!query) return products;
-    return products.filter((product) => product.name.toLocaleLowerCase('vi').includes(query));
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [products, search]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const cleanName = name.trim();
-    const numericPrice = Number(price);
-
-    if (!cleanName || !Number.isFinite(numericPrice) || numericPrice <= 0) {
-      toast.error('Vui lòng nhập tên và giá hợp lệ.');
+  const handleCreateSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || Number(price) <= 0) {
+      toast.error('Vui lòng điền tên và giá hợp lệ!');
       return;
     }
-
-    createMutation.mutate({ name: cleanName, price: numericPrice });
+    createMutation.mutate({ name: name.trim(), price: Number(price) });
   };
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm('Bạn chắc chắn muốn xoá sản phẩm này?')) return;
-    deleteMutation.mutate(id);
-  };
-
-  const handleStartEdit = (product: Product) => {
-    setEditingProduct(product);
-    setEditName(product.name);
-    setEditPrice(String(product.price));
-  };
-
-  const handleUpdate = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleUpdateSubmit = (e: FormEvent) => {
+    e.preventDefault();
     if (!editingProduct) return;
-    const cleanName = editName.trim();
-    const numericPrice = Number(editPrice);
-
-    if (!cleanName || !Number.isFinite(numericPrice) || numericPrice <= 0) {
-      toast.error('Vui lòng nhập tên và giá hợp lệ.');
+    if (!editName.trim() || Number(editPrice) <= 0) {
+      toast.error('Vui lòng điền tên và giá hợp lệ!');
       return;
     }
-
     updateMutation.mutate({
       id: editingProduct.id,
-      name: cleanName,
-      price: numericPrice,
+      name: editName.trim(),
+      price: Number(editPrice),
     });
   };
 
+  const toggleWishlist = (id: number) => {
+    if (wishlist.includes(id)) {
+      setWishlist(wishlist.filter((x) => x !== id));
+      toast('Đã gỡ khỏi danh sách yêu thích', { icon: '♡' });
+    } else {
+      setWishlist([...wishlist, id]);
+      toast.success('Đã thêm vào danh sách yêu thích!', { icon: '❤️' });
+    }
+  };
+
+  const handleSubscribe = (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes('@')) {
+      toast.error('Vui lòng nhập địa chỉ email hợp lệ!');
+      return;
+    }
+    toast.success('Cảm ơn bạn đã đăng ký nhận bản tin từ MỘC Studio!', { icon: '✨' });
+    setEmail('');
+  };
+
   return (
-    <main className="store-shell">
-      <div className="announcement-bar">
-        <span>Giao hàng miễn phí cho đơn từ 500.000₫</span>
-        <span className="announcement-right">
-          MỘC Studio · Thời trang thường ngày <span aria-hidden="true">✳</span>
-        </span>
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#F8F8F6]">
+      {/* 1. Header with Cart Badge */}
+      <Navbar onSearch={(q) => setSearch(q)} />
 
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label="MỘC Studio — Trang chủ">
-          <span className="brand-mark">m.</span>
-          <span className="brand-name">
-            MỘC <span>STUDIO</span>
-          </span>
-        </Link>
-        <nav className="main-nav" aria-label="Điều hướng chính">
-          <Link className="nav-active" href="/">Trang chủ</Link>
-          <a href="#products">Sản phẩm</a>
-          <a href="#story">Câu chuyện</a>
-        </nav>
-        <div className="header-actions">
-          <label className="header-search">
-            <ProductIcon type="search" />
-            <input
-              aria-label="Tìm sản phẩm"
-              placeholder="Tìm sản phẩm..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
-          <Link className="cart-link" href="/cart" aria-label={`Giỏ hàng, ${cartData.totalQuantity} sản phẩm`}>
-            <ProductIcon type="bag" />
-            <span>Giỏ hàng</span>
-            <b>{cartData.totalQuantity}</b>
-          </Link>
-        </div>
-      </header>
-
-      <section className="hero" id="home">
-        <div className="hero-photo" role="img" aria-label="Bộ sưu tập thời trang MỘC Studio">
-          <div className="hero-note">
-            <span className="note-dot" /> Bộ sưu tập mới · Fullstack Next.js & Express
-          </div>
-          <div className="hero-caption">
-            <span>CHẠM VÀO</span>
-            <br />
-            NHỮNG ĐIỀU
-            <br />
-            <i>giản đơn</i>
-          </div>
-          <div className="hero-bottom">
-            <span>Trang phục cho những ngày rất bình thường.</span>
-            <a href="#products">
-              Khám phá bộ sưu tập <ProductIcon type="arrow" />
-            </a>
-          </div>
-          <div className="hero-index">
-            01 <span>/</span> 04
-          </div>
-        </div>
-        <div className="hero-side">
-          <span className="side-kicker">MỘC STUDIO — SINCE 2026</span>
-          <span className="side-line" />
-          <span className="side-vertical">ĐẸP THEO CÁCH CỦA BẠN</span>
-          <span className="side-spark">✳</span>
-        </div>
-      </section>
-
-      <section className="benefits" aria-label="Thông tin cửa hàng">
-        <div>
-          <span className="benefit-icon">✳</span>
-          <span>
-            <strong>Chất liệu chọn lọc</strong>
-            <small>Êm dịu trên làn da</small>
-          </span>
-        </div>
-        <div>
-          <span className="benefit-icon">↗</span>
-          <span>
-            <strong>Giao hàng toàn quốc</strong>
-            <small>Đồng giá chỉ từ 25K</small>
-          </span>
-        </div>
-        <div>
-          <span className="benefit-icon">♡</span>
-          <span>
-            <strong>Đổi trả dễ dàng</strong>
-            <small>Trong vòng 7 ngày</small>
-          </span>
-        </div>
-        <div>
-          <span className="benefit-icon">♧</span>
-          <span>
-            <strong>Mặc đẹp mỗi ngày</strong>
-            <small>Tự tin theo cách riêng</small>
-          </span>
-        </div>
-      </section>
-
-      <section className="products-section" id="products">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">ĐƯỢC YÊU THÍCH</span>
-            <h1>Chọn món bạn <i>thương.</i></h1>
-            <p>Những thiết kế thoải mái cho nhịp sống mỗi ngày.</p>
-          </div>
-          <button
-            className="add-product-button"
-            type="button"
-            onClick={() => setFormOpen(true)}
-          >
-            Thêm sản phẩm <span>＋</span>
-          </button>
-        </div>
-
-        {/* Modal Backdrop */}
-        {(formOpen || Boolean(editingProduct)) && (
-          <div
-            className="modal-backdrop"
-            onClick={() => {
-              setFormOpen(false);
-              setEditingProduct(null);
-            }}
-          />
-        )}
-
-        {/* Modal Thêm sản phẩm */}
-        {formOpen && (
-          <form className="product-form" onSubmit={handleSubmit}>
-            <div className="form-heading">
-              <div>
-                <span className="eyebrow">MỘC STUDIO</span>
-                <h2>Thêm sản phẩm mới</h2>
-              </div>
-              <button
-                className="close-form"
-                type="button"
-                aria-label="Đóng biểu mẫu"
-                onClick={() => setFormOpen(false)}
-              >
-                <ProductIcon type="close" />
-              </button>
-            </div>
-            <label>
-              Tên sản phẩm
-              <input
-                autoFocus
-                required
-                maxLength={80}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ví dụ: Áo thun cotton basic"
-              />
-            </label>
-            <label>
-              Giá bán (₫)
-              <input
-                required
-                min="1"
-                type="number"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                placeholder="Ví dụ: 150000"
-              />
-            </label>
-            <div className="form-actions">
-              <button
-                className="cancel-button"
-                type="button"
-                onClick={() => setFormOpen(false)}
-              >
-                Huỷ
-              </button>
-              <button
-                className="submit-button"
-                type="submit"
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? 'Đang lưu...' : 'Lưu sản phẩm'}{' '}
-                <ProductIcon type="arrow" />
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Modal Chỉnh sửa sản phẩm (Nâng cao 1) */}
-        {editingProduct && (
-          <form className="product-form" onSubmit={handleUpdate}>
-            <div className="form-heading">
-              <div>
-                <span className="eyebrow">CHỈNH SỬA SẢN PHẨM</span>
-                <h2>Cập nhật thông tin</h2>
-              </div>
-              <button
-                className="close-form"
-                type="button"
-                aria-label="Đóng biểu mẫu"
-                onClick={() => setEditingProduct(null)}
-              >
-                <ProductIcon type="close" />
-              </button>
-            </div>
-            <label>
-              Tên sản phẩm
-              <input
-                autoFocus
-                required
-                maxLength={80}
-                value={editName}
-                onChange={(event) => setEditName(event.target.value)}
-                placeholder="Tên sản phẩm..."
-              />
-            </label>
-            <label>
-              Giá bán (₫)
-              <input
-                required
-                min="1"
-                type="number"
-                value={editPrice}
-                onChange={(event) => setEditPrice(event.target.value)}
-                placeholder="Giá sản phẩm..."
-              />
-            </label>
-            <div className="form-actions">
-              <button
-                className="cancel-button"
-                type="button"
-                onClick={() => setEditingProduct(null)}
-              >
-                Huỷ
-              </button>
-              <button
-                className="submit-button"
-                type="submit"
-                disabled={updateMutation.isPending}
-              >
-                {updateMutation.isPending ? 'Đang cập nhật...' : 'Cập nhật'}{' '}
-                <ProductIcon type="arrow" />
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div className="product-grid" aria-live="polite">
-          {isLoading ? (
-            <div className="empty-state">
-              <span className="loading-dot" />
-              <p>Đang tải sản phẩm từ TanStack Query...</p>
-            </div>
-          ) : visibleProducts.length ? (
-            visibleProducts.map((product, index) => {
-              const image = imageOptions[index % imageOptions.length];
-              return (
-                <article className="product-card" key={product.id}>
-                  <div className={`product-image image-${image.tone}`}>
-                    <Image
-                      src={`https://images.unsplash.com/${image.src}?auto=format&fit=crop&w=720&q=85`}
-                      alt={product.name}
-                      width={720}
-                      height={880}
-                      unoptimized
-                    />
-                    {index === 0 && <span className="product-tag">BÁN CHẠY</span>}
-                    <div className="card-actions">
-                      <button
-                        className="action-btn edit-product"
-                        type="button"
-                        onClick={() => handleStartEdit(product)}
-                        aria-label={`Sửa ${product.name}`}
-                        title="Chỉnh sửa sản phẩm"
-                      >
-                        <ProductIcon type="edit" />
-                      </button>
-                      <button
-                        className="action-btn delete-product"
-                        type="button"
-                        onClick={() => handleDelete(product.id)}
-                        aria-label={`Xoá ${product.name}`}
-                        title="Xoá sản phẩm"
-                      >
-                        <ProductIcon type="close" />
-                      </button>
-                    </div>
-                    {/* Nâng cao 4: Nút Thêm vào giỏ nhanh */}
-                    <button
-                      className="quick-add"
-                      type="button"
-                      onClick={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
-                      aria-label={`Thêm ${product.name} vào giỏ hàng`}
-                      title="Thêm vào giỏ hàng"
-                    >
-                      ＋
-                    </button>
-                  </div>
-                  <div className="product-details">
-                    <div>
-                      <span className="product-category">
-                        {image.label} · MỘC STUDIO
-                      </span>
-                      <h2>{product.name}</h2>
-                    </div>
-                    <span className="product-price">
-                      {Number(product.price).toLocaleString('vi-VN')}₫
-                    </span>
-                  </div>
-                  <div className="product-card-footer">
-                    <div className="product-rating">
-                      <span>★★★★★</span>
-                      <small>4.9 <i>·</i> Mộc mạc, dễ mặc</small>
-                    </div>
-                    <button
-                      className="add-to-cart-text-btn"
-                      type="button"
-                      onClick={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
-                    >
-                      Thêm giỏ hàng
-                    </button>
-                  </div>
-                </article>
-              );
-            })
-          ) : (
-            <div className="empty-state">
-              <span className="empty-icon">✳</span>
-              <h2>{search ? 'Chưa tìm thấy sản phẩm' : 'Bộ sưu tập đang chờ bạn'}</h2>
-              <p>
-                {search
-                  ? 'Thử tìm với một tên gọi khác nhé.'
-                  : 'Thêm sản phẩm đầu tiên để bắt đầu bộ sưu tập.'}
+      <main className="flex-grow">
+        {/* 2. HERO SECTION */}
+        <section className="hero-section-modern site-container">
+          <div className="hero-grid">
+            <div className="hero-content">
+              <span className="hero-badge">BỘ SƯU TẬP MỚI · THU ĐÔNG 2026</span>
+              <h1 className="hero-headline">
+                Tìm Phong Cách Của Riêng Bạn
+              </h1>
+              <p className="hero-description">
+                Khám phá những thiết kế tối giản, tinh tế được may từ chất liệu tự nhiên, mang lại sự êm dịu và tự tin trọn vẹn cho cuộc sống mỗi ngày.
               </p>
+              <div className="hero-cta-group">
+                <Link href="/products" className="btn-primary">
+                  Mua sắm ngay →
+                </Link>
+                <a href="#products" className="btn-secondary">
+                  Khám phá bộ sưu tập
+                </a>
+              </div>
+            </div>
+
+            <div className="hero-image-wrap">
+              <Image
+                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=85"
+                alt="Bộ sưu tập MỘC Studio"
+                width={1200}
+                height={800}
+                priority
+                unoptimized
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* 3. FEATURED CATEGORIES */}
+        <section className="categories-section site-container" id="categories">
+          <div className="section-header-modern">
+            <div>
+              <h2 className="section-title">Mua sắm theo danh mục</h2>
+              <p className="section-subtitle">Khám phá các dòng sản phẩm được yêu thích nhất.</p>
+            </div>
+          </div>
+
+          <div className="categories-grid">
+            {categoryData.map((cat) => (
+              <Link href="/products" key={cat.slug} className="category-card">
+                <Image
+                  src={cat.image}
+                  alt={cat.name}
+                  width={600}
+                  height={400}
+                  unoptimized
+                />
+                <div className="category-overlay">
+                  <h3>{cat.name}</h3>
+                  <span>{cat.items}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. FEATURED PRODUCTS (With Lab 3 Fullstack CRUD Integration) */}
+        <section className="products-section-wrap site-container" id="products">
+          <div className="section-header-modern">
+            <div>
+              <h2 className="section-title">Sản phẩm nổi bật</h2>
+              <p className="section-subtitle">Thiết kế được lựa chọn nhiều nhất trong tuần qua.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="btn-secondary text-xs"
+                onClick={() => setFormOpen(true)}
+              >
+                ＋ Thêm sản phẩm mới
+              </button>
+              <Link href="/products" className="section-action-link">
+                Xem tất cả →
+              </Link>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="empty-box-state">
+              <p>Đang tải dữ liệu sản phẩm...</p>
+            </div>
+          ) : visibleProducts.length === 0 ? (
+            <div className="empty-box-state">
+              <h3>{search ? 'Không tìm thấy sản phẩm' : 'Chưa có sản phẩm nào'}</h3>
+              <p>{search ? 'Vui lòng thử lại với từ khoá khác.' : 'Nhấn nút "Thêm sản phẩm mới" để bắt đầu.'}</p>
+            </div>
+          ) : (
+            <div className="products-grid-4">
+              {visibleProducts.map((product, idx) => {
+                const img = sampleImages[idx % sampleImages.length];
+                const isFavorite = wishlist.includes(product.id);
+                return (
+                  <article className="modern-product-card" key={product.id}>
+                    <div className="product-img-box">
+                      <Image
+                        src={img}
+                        alt={product.name}
+                        width={600}
+                        height={600}
+                        unoptimized
+                      />
+                      {idx === 0 && <span className="product-badge-pill">BÁN CHẠY</span>}
+
+                      <div className="card-top-actions">
+                        <button
+                          type="button"
+                          className="icon-action-pill btn-wishlist"
+                          onClick={() => toggleWishlist(product.id)}
+                          aria-label="Yêu thích"
+                          title="Lưu vào yêu thích"
+                        >
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill={isFavorite ? '#E11D48' : 'none'} stroke={isFavorite ? '#E11D48' : 'currentColor'} strokeWidth="1.8">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-pill btn-edit"
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setEditName(product.name);
+                            setEditPrice(String(product.price));
+                          }}
+                          aria-label="Sửa sản phẩm"
+                          title="Chỉnh sửa sản phẩm"
+                        >
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-pill btn-delete"
+                          onClick={() => {
+                            if (window.confirm(`Bạn chắc chắn muốn xoá sản phẩm "${product.name}"?`)) {
+                              deleteMutation.mutate(product.id);
+                            }
+                          }}
+                          aria-label="Xoá sản phẩm"
+                          title="Xoá sản phẩm"
+                        >
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="product-card-body">
+                      <span className="product-card-cat">MỘC STUDIO · THỜI TRANG</span>
+                      <Link href={`/products/${product.id}`} className="product-card-title">
+                        {product.name}
+                      </Link>
+                      <div className="product-price-row">
+                        <span className="current-price">{Number(product.price).toLocaleString('vi-VN')}₫</span>
+                        <span className="original-price">{Number(product.price * 1.25).toLocaleString('vi-VN')}₫</span>
+                      </div>
+                      <div className="product-card-actions">
+                        <button
+                          type="button"
+                          className="btn-card-add"
+                          onClick={() => addToCartMutation.mutate(product.id)}
+                        >
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                          </svg>
+                          Thêm vào giỏ
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
-        </div>
-        <div className="section-footer">
-          <span>ĐANG CÓ {products.length} THIẾT KẾ</span>
-          <a href="#products">
-            Xem tất cả <ProductIcon type="arrow" />
-          </a>
-        </div>
-      </section>
+        </section>
 
-      <section className="story-band" id="story">
-        <span className="story-flower">✳</span>
-        <p>
-          Mặc đẹp không cần dịp.<br />
-          <i>Chỉ cần là chính mình.</i>
-        </p>
-        <a href="#products">
-          Tìm phong cách của bạn <ProductIcon type="arrow" />
-        </a>
-        <span className="story-stamp">
-          MỘC<br />
-          <small>STUDIO · 2026</small>
-        </span>
-      </section>
+        {/* 5. PROMOTIONAL BANNER */}
+        <section className="promo-banner-section site-container">
+          <div className="promo-banner-card">
+            <div className="promo-banner-content">
+              <h2>Thiết kế tối giản, vẻ đẹp vượt thời gian</h2>
+              <p>
+                Sản phẩm tinh giản. Chất liệu bền vững được chọn lọc để gắn bó cùng bạn qua nhiều mùa thời trang.
+              </p>
+              <Link href="/products" className="btn-primary">
+                Khám phá bộ sưu tập →
+              </Link>
+            </div>
+            <div className="promo-banner-img">
+              <Image
+                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80"
+                alt="Quảng bá thương hiệu MỘC Studio"
+                width={1000}
+                height={600}
+                unoptimized
+              />
+            </div>
+          </div>
+        </section>
 
-      <footer className="site-footer">
-        <Link className="brand footer-brand" href="/">
-          <span className="brand-mark">m.</span>
-          <span className="brand-name">
-            MỘC <span>STUDIO</span>
-          </span>
-        </Link>
-        <span>Thời trang thường ngày, chọn lọc bằng cả sự dịu dàng.</span>
-        <span>© 2026 MỘC STUDIO</span>
-      </footer>
-    </main>
+        {/* 6. WHY SHOP WITH US */}
+        <section className="features-section site-container" id="about">
+          <div className="features-grid">
+            <div className="feature-box">
+              <div className="feature-icon-wrap">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" />
+                  <path d="M17 9h4l2 3v4h-6V9z" />
+                  <circle cx="7" cy="18" r="2" />
+                  <circle cx="17" cy="18" r="2" />
+                </svg>
+              </div>
+              <h4>Miễn phí vận chuyển</h4>
+              <p>Giao hàng miễn phí toàn quốc cho tất cả đơn hàng từ 500.000₫.</p>
+            </div>
+
+            <div className="feature-box">
+              <div className="feature-icon-wrap">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <h4>Thanh toán an toàn</h4>
+              <p>Thông tin thanh toán và giao dịch được mã hóa và bảo vệ 100%.</p>
+            </div>
+
+            <div className="feature-box">
+              <div className="feature-icon-wrap">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                  <path d="M21 3v5h-5" />
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                  <path d="M3 21v-5h5" />
+                </svg>
+              </div>
+              <h4>Đổi trả trong 30 ngày</h4>
+              <p>Hỗ trợ đổi size hoặc trả hàng dễ dàng trong vòng 30 ngày kể từ khi nhận.</p>
+            </div>
+
+            <div className="feature-box">
+              <div className="feature-icon-wrap">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <h4>Hỗ trợ tận tâm 24/7</h4>
+              <p>Đội ngũ chuyên viên tư vấn của MỘC luôn sẵn sàng hỗ trợ bạn bất kỳ lúc nào.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 7. NEWSLETTER */}
+        <section className="newsletter-section site-container">
+          <div className="newsletter-box">
+            <h2>Đăng ký nhận tin mới</h2>
+            <p>
+              Nhận thông báo về bộ sưu tập mới nhất, câu chuyện thiết kế và các đặc quyền ưu đãi dành riêng cho bạn.
+            </p>
+            <form onSubmit={handleSubscribe} className="newsletter-form">
+              <input
+                type="email"
+                placeholder="Nhập địa chỉ email của bạn..."
+                className="newsletter-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn-primary whitespace-nowrap">
+                Đăng ký ngay
+              </button>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      {/* 8. FOOTER */}
+      <Footer />
+
+      {/* MODAL THÊM SẢN PHẨM (Lab 3 Tiết 2) */}
+      {formOpen && (
+        <>
+          <div className="modal-backdrop" onClick={() => setFormOpen(false)} />
+          <div className="modal-dialog-card">
+            <div className="modal-header">
+              <h3>Thêm sản phẩm mới</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setFormOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="modal-form-group">
+                <label>Tên sản phẩm</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="Ví dụ: Áo thun cotton basic"
+                  className="modal-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div className="modal-form-group">
+                <label>Giá bán (₫)</label>
+                <input
+                  type="number"
+                  required
+                  min="1000"
+                  placeholder="Ví dụ: 180000"
+                  className="modal-input"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>
+                  Huỷ bỏ
+                </button>
+                <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? 'Đang lưu...' : 'Thêm sản phẩm'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* MODAL SỬA SẢN PHẨM (Lab 3 Nâng cao 1) */}
+      {editingProduct && (
+        <>
+          <div className="modal-backdrop" onClick={() => setEditingProduct(null)} />
+          <div className="modal-dialog-card">
+            <div className="modal-header">
+              <h3>Chỉnh sửa thông tin</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setEditingProduct(null)}>
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleUpdateSubmit}>
+              <div className="modal-form-group">
+                <label>Tên sản phẩm</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  className="modal-input"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div className="modal-form-group">
+                <label>Giá bán (₫)</label>
+                <input
+                  type="number"
+                  required
+                  min="1000"
+                  className="modal-input"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setEditingProduct(null)}>
+                  Huỷ bỏ
+                </button>
+                <button type="submit" className="btn-primary" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? 'Đang cập nhật...' : 'Lưu thay đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

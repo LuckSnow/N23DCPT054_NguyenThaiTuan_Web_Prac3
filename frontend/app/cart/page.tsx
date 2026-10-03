@@ -1,10 +1,13 @@
 'use client';
 
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 type CartItem = {
   productId: number;
@@ -51,7 +54,7 @@ export default function CartPage() {
     },
   });
 
-  // Mutation cập nhật số lượng (thêm thêm)
+  // Mutation thêm số lượng
   const addMoreMutation = useMutation({
     mutationFn: (productId: number) => api.post('/api/cart', { productId, quantity: 1 }),
     onSuccess: () => {
@@ -70,41 +73,16 @@ export default function CartPage() {
   const finalTotal = cart.totalPrice + shippingFee;
 
   return (
-    <div className="store-shell">
-      <div className="announcement-bar">
-        <span>Giao hàng miễn phí cho đơn từ 500.000₫</span>
-        <span className="announcement-right">
-          MỘC Studio · Đơn hàng của bạn <span aria-hidden="true">✳</span>
-        </span>
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#F8F8F6]">
+      <Navbar />
 
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label="MỘC Studio — Trang chủ">
-          <span className="brand-mark">m.</span>
-          <span className="brand-name">
-            MỘC <span>STUDIO</span>
-          </span>
-        </Link>
-        <nav className="main-nav" aria-label="Điều hướng">
-          <Link href="/">Trang chủ</Link>
-          <Link href="/#products">Sản phẩm</Link>
-          <span className="nav-active">Giỏ hàng</span>
-        </nav>
-        <div className="header-actions">
-          <Link className="cart-link" href="/cart">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M5 8h14l1 12H4L5 8Z" />
-              <path d="M9 9V6a3 3 0 0 1 6 0v3" />
-            </svg>
-            <span>Giỏ hàng</span>
-            <b>{cart.totalQuantity}</b>
-          </Link>
-        </div>
-      </header>
-
-      <main className="cart-container">
+      <main className="site-container flex-grow cart-container">
         <div className="cart-header">
-          <span className="eyebrow">MUA SẮM</span>
+          <nav className="breadcrumb-nav">
+            <Link href="/">Trang chủ</Link>
+            <span>/</span>
+            <span>Giỏ hàng</span>
+          </nav>
           <h1>Giỏ hàng của bạn</h1>
           <p>
             Hiện có <strong>{cart.totalQuantity}</strong> món đồ trong giỏ hàng
@@ -112,8 +90,7 @@ export default function CartPage() {
         </div>
 
         {isLoading ? (
-          <div className="empty-state">
-            <span className="loading-dot" />
+          <div className="empty-box-state">
             <p>Đang tải giỏ hàng...</p>
           </div>
         ) : cart.items.length === 0 ? (
@@ -121,7 +98,7 @@ export default function CartPage() {
             <span className="empty-cart-icon">🛍️</span>
             <h2>Giỏ hàng của bạn đang trống</h2>
             <p>Hãy khám phá các thiết kế thời trang tinh tế của MỘC Studio để chọn món bạn thương.</p>
-            <Link className="continue-shopping-btn" href="/#products">
+            <Link className="btn-primary" href="/products">
               Khám phá sản phẩm ngay →
             </Link>
           </div>
@@ -165,7 +142,7 @@ export default function CartPage() {
                       <button
                         className="qty-plus-btn"
                         onClick={() => addMoreMutation.mutate(item.productId)}
-                        title="Thêm số lượng"
+                        title="Tăng số lượng"
                         type="button"
                       >
                         ＋
@@ -183,7 +160,7 @@ export default function CartPage() {
                         title="Xoá khỏi giỏ"
                         type="button"
                       >
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6">
                           <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
@@ -193,7 +170,7 @@ export default function CartPage() {
               })}
 
               <div className="cart-bottom-actions">
-                <Link className="back-link" href="/#products">
+                <Link className="back-link" href="/products">
                   ← Tiếp tục chọn thêm sản phẩm
                 </Link>
               </div>
@@ -230,7 +207,7 @@ export default function CartPage() {
               </button>
               <div className="guarantees">
                 <div>✓ Cam kết hàng chính hãng 100%</div>
-                <div>✓ Hỗ trợ đổi hàng trong 7 ngày</div>
+                <div>✓ Hỗ trợ đổi trả trong 30 ngày</div>
                 <div>✓ Thanh toán khi nhận hàng (COD)</div>
               </div>
             </aside>
@@ -238,16 +215,7 @@ export default function CartPage() {
         )}
       </main>
 
-      <footer className="site-footer">
-        <Link className="brand footer-brand" href="/">
-          <span className="brand-mark">m.</span>
-          <span className="brand-name">
-            MỘC <span>STUDIO</span>
-          </span>
-        </Link>
-        <span>Thời trang thường ngày, chọn lọc bằng cả sự dịu dàng.</span>
-        <span>© 2026 MỘC STUDIO</span>
-      </footer>
+      <Footer />
     </div>
   );
 }
