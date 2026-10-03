@@ -61,7 +61,7 @@ export default function Footer() {
 
       <div className="footer-bottom-bar">
         <span>© 2026 MỘC STUDIO. All rights reserved.</span>
-        <span>Dự án thực hành Lab 3 Fullstack Next.js & Express — Sinh viên: Nguyễn Thái Tuấn (N23DCPT054)</span>
+        <span>Thời trang & Phong cách sống tối giản.</span>
       </div>
     </footer>
   );

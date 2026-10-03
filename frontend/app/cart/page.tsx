@@ -24,22 +24,21 @@ type CartResponse = {
 };
 
 const imageMap: Record<number, string> = {
-  1: 'photo-1521572163474-6864f9cf17ab',
-  2: 'photo-1542272604-787c3835535d',
-  3: 'photo-1529139574466-a303027c1d8b',
-  4: 'photo-1523381210434-271e8be1f52b',
+  1: 'photo-1542291026-7eec264c27ff',
+  2: 'photo-1521572163474-6864f9cf17ab',
+  3: 'photo-1553062407-98eeb64c6a62',
+  4: 'photo-1542272604-787c3835535d',
 };
 
-// Default variant mapping for realistic e-commerce presentation
+// Realistic variant mapping for items
 const variantMap: Record<number, { color: string; size: string; category: string }> = {
-  1: { color: 'Đen (Black)', size: 'Size M', category: 'Áo thun cotton' },
-  2: { color: 'Xanh Indigo', size: 'Size 31', category: 'Quần jeans slim' },
-  3: { color: 'Trắng tinh khôi', size: 'Size L', category: 'Áo sơ mi linen' },
-  4: { color: 'Rêu phong', size: 'Size XL', category: 'Áo khoác bomber' },
+  1: { color: 'Black', size: '41', category: 'Running Shoes' },
+  2: { color: 'White', size: 'M', category: 'Cotton T-Shirt' },
+  3: { color: 'Black', size: 'One Size', category: 'Accessories' },
+  4: { color: 'Blue', size: '31', category: 'Slim Denim' },
 };
 
-const FREE_SHIPPING_THRESHOLD = 500000; // 500.000₫
-const STANDARD_SHIPPING_FEE = 25000; // 25.000₫
+const SHIPPING_FEE = 30000; // 30.000đ
 
 export default function ShoppingCartPage() {
   const queryClient = useQueryClient();
@@ -63,10 +62,10 @@ export default function ShoppingCartPage() {
     mutationFn: (productId: number) => api.delete(`/api/cart/${productId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast.success('Đã xoá sản phẩm khỏi giỏ hàng', { icon: '🗑️' });
+      toast.success('Đã xóa sản phẩm khỏi giỏ hàng', { icon: '🗑️' });
     },
     onError: () => {
-      toast.error('Xoá sản phẩm thất bại!');
+      toast.error('Xóa sản phẩm thất bại!');
     },
   });
 
@@ -85,7 +84,7 @@ export default function ShoppingCartPage() {
   const handleStepQty = (productId: number, currentQty: number, delta: number) => {
     const newQty = currentQty + delta;
     if (newQty <= 0) {
-      if (window.confirm('Bạn có muốn xoá sản phẩm này khỏi giỏ hàng?')) {
+      if (window.confirm('Bạn có muốn xóa sản phẩm này khỏi giỏ hàng?')) {
         removeMutation.mutate(productId);
       }
       return;
@@ -109,10 +108,10 @@ export default function ShoppingCartPage() {
     if (!clean) return;
 
     if (clean === 'MOC20' || clean === 'DISCOUNT20' || clean === 'CHAOMOC') {
-      const discount = Math.min(50000, Math.round(cart.totalPrice * 0.15));
+      const discount = 200000; // 200.000đ per specification
       setDiscountAmount(discount);
       setAppliedPromo(clean);
-      toast.success(`Áp dụng mã ${clean} thành công! Giảm ${discount.toLocaleString('vi-VN')}₫`, {
+      toast.success(`Áp dụng mã ${clean} thành công! Giảm ${discount.toLocaleString('vi-VN')}đ`, {
         icon: '🎉',
       });
       setPromoCode('');
@@ -122,81 +121,79 @@ export default function ShoppingCartPage() {
   };
 
   const handleCheckout = () => {
-    toast.success('Tiến hành đặt hàng thành công! MỘC Studio sẽ liên hệ xác nhận đơn.', {
+    toast.success('Tiến hành đặt hàng thành công! Đơn hàng đang được xử lý.', {
       duration: 4000,
       icon: '🔒',
     });
   };
 
-  // Calculations
-  const isFreeShipping = cart.totalPrice >= FREE_SHIPPING_THRESHOLD || cart.totalPrice === 0;
-  const shippingFee = isFreeShipping ? 0 : STANDARD_SHIPPING_FEE;
-  const awayFromFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cart.totalPrice);
-  const freeShippingProgress = Math.min(100, Math.round((cart.totalPrice / FREE_SHIPPING_THRESHOLD) * 100));
-  const finalTotal = Math.max(0, cart.totalPrice + shippingFee - discountAmount);
+  const shippingCost = cart.items.length > 0 ? SHIPPING_FEE : 0;
+  const finalTotal = Math.max(0, cart.totalPrice + shippingCost - discountAmount);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F8F6]">
       <Navbar />
 
       <main className="site-container flex-grow pb-24">
-        {/* HEADER */}
+        {/* 2. BREADCRUMB */}
         <div className="cart-page-header">
           <nav className="breadcrumb-nav">
             <Link href="/">Home</Link>
             <span>/</span>
-            <span>Cart</span>
+            <span>Shopping Cart</span>
           </nav>
-          <div className="flex items-baseline justify-between flex-wrap gap-2">
+
+          {/* 3. PAGE TITLE */}
+          <div className="mt-4 mb-2">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#171717]">
-              Shopping Cart
+              Giỏ hàng
             </h1>
-            <span className="text-sm font-semibold text-[#6B6B6B]">
-              {cart.totalQuantity} {cart.totalQuantity === 1 ? 'item' : 'items'}
-            </span>
+            <p className="text-sm font-medium text-[#6B6B6B] mt-1">
+              {cart.totalQuantity} sản phẩm
+            </p>
           </div>
         </div>
 
         {/* CONTENT */}
         {isLoading ? (
           <div className="empty-box-state">
-            <p>Đang tải giỏ hàng...</p>
+            <p className="text-[#6B6B6B]">Đang tải giỏ hàng...</p>
           </div>
         ) : cart.items.length === 0 ? (
-          /* EMPTY CART STATE */
+          /* 12. EMPTY CART STATE */
           <div className="empty-cart-container">
             <div className="empty-cart-icon-circle">
-              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#171717" strokeWidth="1.6">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
+                <line x1="3" y1="6" x2="21" y2="6" stroke="#171717" strokeWidth="1.6" />
+                <path d="M16 10a4 4 0 0 1-8 0" stroke="#171717" strokeWidth="1.6" />
               </svg>
             </div>
-            <h2 className="empty-cart-heading">Your cart is empty</h2>
+            <h2 className="empty-cart-heading">Giỏ hàng của bạn đang trống</h2>
             <p className="empty-cart-text">
-              Looks like you haven&apos;t added anything yet. Explore our latest arrivals and timeless essentials.
+              Hãy khám phá các sản phẩm và thêm những món bạn yêu thích vào giỏ hàng.
             </p>
-            <Link href="/products" className="btn-primary inline-flex">
-              Start Shopping →
+            <Link href="/products" className="btn-primary inline-flex px-8 py-3.5 rounded-xl font-semibold">
+              Mua sắm ngay
             </Link>
           </div>
         ) : (
-          /* 2-COLUMN CART LAYOUT */
+          /* 4. MAIN CART LAYOUT (Two-column layout: 65% / 35%) */
           <div className="cart-layout">
-            {/* LEFT: Cart Items List */}
+            {/* LEFT: Cart item list (65%) */}
             <div className="cart-items-wrapper">
               {cart.items.map((item) => {
-                const imgKey = imageMap[item.productId] || 'photo-1521572163474-6864f9cf17ab';
+                const imgKey = imageMap[item.productId] || 'photo-1542291026-7eec264c27ff';
                 const variants = variantMap[item.productId] || {
-                  color: 'Tiêu chuẩn',
-                  size: 'Free size',
-                  category: 'Thời trang',
+                  color: 'Black',
+                  size: '41',
+                  category: 'Sản phẩm',
                 };
                 const isSavedWishlist = wishlistItems.includes(item.productId);
 
                 return (
                   <article className="cart-item-modern" key={item.productId}>
-                    {/* Product Image 120x120 */}
+                    {/* 5. PRODUCT IMAGE (120x120, square, neutral background, 12px radius) */}
                     <div className="cart-item-media">
                       <Image
                         src={`https://images.unsplash.com/${imgKey}?auto=format&fit=crop&w=360&q=80`}
@@ -207,23 +204,22 @@ export default function ShoppingCartPage() {
                       />
                     </div>
 
-                    {/* Product Details */}
+                    {/* PRODUCT INFORMATION */}
                     <div className="cart-item-center">
-                      <span className="cart-item-category">{variants.category}</span>
                       <Link href={`/products/${item.productId}`} className="cart-item-name">
                         {item.name}
                       </Link>
                       <div className="cart-item-variants">
-                        <span>{variants.color}</span>
+                        <span>Color: {variants.color}</span>
                         <span>•</span>
-                        <span>{variants.size}</span>
+                        <span>Size: {variants.size}</span>
                       </div>
                       <div className="cart-item-unit-price">
-                        Đơn giá: <strong>{Number(item.price).toLocaleString('vi-VN')}₫</strong>
+                        <strong>{Number(item.price).toLocaleString('vi-VN')}đ</strong>
                       </div>
                     </div>
 
-                    {/* Right Controls: Quantity & Total & Actions */}
+                    {/* RIGHT CONTROLS: Quantity [-] 1 [+] & Total & Remove/Wishlist */}
                     <div className="cart-item-right-actions">
                       {/* Quantity Selector [-] 1 [+] */}
                       <div className="cart-qty-selector">
@@ -246,14 +242,14 @@ export default function ShoppingCartPage() {
                         </button>
                       </div>
 
-                      {/* Total Price */}
+                      {/* Total Item Price */}
                       <div className="cart-item-total-col">
                         <span className="cart-item-total-price">
-                          {Number(item.subtotal).toLocaleString('vi-VN')}₫
+                          {Number(item.subtotal).toLocaleString('vi-VN')}đ
                         </span>
                       </div>
 
-                      {/* Icons: Wishlist & Remove */}
+                      {/* Action Icons */}
                       <div className="cart-item-icons-group">
                         <button
                           type="button"
@@ -278,12 +274,12 @@ export default function ShoppingCartPage() {
                           type="button"
                           className="cart-icon-action-btn btn-remove"
                           onClick={() => {
-                            if (window.confirm(`Bạn muốn xoá "${item.name}" khỏi giỏ hàng?`)) {
+                            if (window.confirm(`Bạn muốn xóa "${item.name}" khỏi giỏ hàng?`)) {
                               removeMutation.mutate(item.productId);
                             }
                           }}
-                          aria-label="Xoá sản phẩm"
-                          title="Xoá khỏi giỏ hàng"
+                          aria-label="Xóa sản phẩm"
+                          title="Xóa khỏi giỏ hàng"
                         >
                           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -295,109 +291,85 @@ export default function ShoppingCartPage() {
                 );
               })}
 
-              <div className="pt-2">
-                <Link href="/products" className="text-sm font-semibold text-[#171717] hover:underline inline-flex items-center gap-2">
-                  ← Tiếp tục chọn thêm sản phẩm
+              {/* 11. CONTINUE SHOPPING LINK */}
+              <div className="pt-4">
+                <Link
+                  href="/products"
+                  className="text-sm font-semibold text-[#171717] hover:underline inline-flex items-center gap-2"
+                >
+                  ← Tiếp tục mua sắm
                 </Link>
               </div>
             </div>
 
-            {/* RIGHT: Order Summary */}
+            {/* RIGHT: Order summary (35%) - No free shipping banner per user instruction */}
             <aside className="order-summary-sidebar">
-              {/* FREE SHIPPING PROGRESS BAR */}
-              <div className="free-shipping-card">
-                <div className="free-shipping-text">
-                  {isFreeShipping ? (
-                    <span className="text-[#10B981] font-bold">
-                      🎉 Bạn đã đủ điều kiện được Miễn phí vận chuyển!
-                    </span>
-                  ) : (
-                    <span>
-                      Mua thêm <strong>{awayFromFreeShipping.toLocaleString('vi-VN')}₫</strong> để được Miễn phí vận chuyển.
-                    </span>
-                  )}
-                </div>
-                <div className="free-shipping-track">
-                  <div
-                    className={`free-shipping-fill ${isFreeShipping ? 'reached' : ''}`}
-                    style={{ width: `${freeShippingProgress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Order Summary Card */}
               <div className="order-summary-box">
-                <h2 className="order-summary-title">Order Summary</h2>
+                {/* 7. ORDER SUMMARY */}
+                <h2 className="order-summary-title">Đơn hàng</h2>
 
                 <div className="summary-line-row">
-                  <span>Subtotal</span>
+                  <span>Tạm tính</span>
                   <span className="font-semibold text-[#171717]">
-                    {Number(cart.totalPrice).toLocaleString('vi-VN')}₫
+                    {Number(cart.totalPrice).toLocaleString('vi-VN')}đ
                   </span>
                 </div>
 
                 <div className="summary-line-row">
-                  <span>Shipping</span>
-                  <span>
-                    {shippingFee === 0 ? (
-                      <span className="text-[#10B981] font-bold">Free</span>
-                    ) : (
-                      `${Number(shippingFee).toLocaleString('vi-VN')}₫`
-                    )}
+                  <span>Phí vận chuyển</span>
+                  <span className="font-semibold text-[#171717]">
+                    {shippingCost === 0 ? '0đ' : `${Number(shippingCost).toLocaleString('vi-VN')}đ`}
                   </span>
                 </div>
 
                 {discountAmount > 0 && (
-                  <div className="summary-line-row discount-row">
-                    <span>Discount ({appliedPromo})</span>
-                    <span>-{Number(discountAmount).toLocaleString('vi-VN')}₫</span>
+                  <div className="summary-line-row discount-row text-[#10B981]">
+                    <span>Giảm giá ({appliedPromo})</span>
+                    <span>-{Number(discountAmount).toLocaleString('vi-VN')}đ</span>
                   </div>
                 )}
 
                 <div className="summary-divider-line" />
 
                 <div className="summary-total-row">
-                  <span>Total</span>
-                  <span className="summary-total-price">
-                    {Number(finalTotal).toLocaleString('vi-VN')}₫
+                  <span className="text-base font-bold text-[#171717]">Tổng cộng</span>
+                  <span className="summary-total-price text-2xl font-extrabold text-[#171717]">
+                    {Number(finalTotal).toLocaleString('vi-VN')}đ
                   </span>
                 </div>
 
-                {/* Promo Code Input & Button */}
-                <form onSubmit={handleApplyPromo} className="promo-code-wrap">
-                  <input
-                    type="text"
-                    placeholder="Enter promo code (e.g. MOC20)"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    className="promo-input"
-                  />
-                  <button type="submit" className="btn-promo-apply">
-                    Apply
-                  </button>
-                </form>
+                {/* 8. PROMO CODE */}
+                <div className="mt-5">
+                  <label htmlFor="cart-promo-input" className="block text-xs font-semibold text-[#171717] mb-2 uppercase tracking-wider">
+                    Mã giảm giá
+                  </label>
+                  <form onSubmit={handleApplyPromo} className="promo-code-wrap">
+                    <input
+                      id="cart-promo-input"
+                      type="text"
+                      placeholder="Nhập mã giảm giá (VD: MOC20)"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      className="promo-input"
+                    />
+                    <button type="submit" className="btn-promo-apply">
+                      Áp dụng
+                    </button>
+                  </form>
+                </div>
 
-                {/* Primary Button */}
+                {/* 10. CHECKOUT BUTTON */}
                 <button
                   type="button"
-                  className="btn-checkout-primary"
+                  className="btn-checkout-primary w-full mt-6 py-4 bg-[#171717] text-white rounded-xl font-bold hover:bg-[#333333] transition-all"
                   onClick={handleCheckout}
                 >
-                  Proceed to Checkout →
+                  Tiến hành thanh toán
                 </button>
 
-                {/* Secondary Button */}
-                <Link href="/products" className="btn-continue-secondary">
-                  Continue Shopping
-                </Link>
-
-                {/* Secure Checkout Indicator */}
-                <div className="secure-checkout-indicator">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  <span>🔒 Secure checkout</span>
+                {/* SECURE CHECKOUT INDICATOR */}
+                <div className="secure-checkout-indicator text-center mt-3 text-xs text-[#6B6B6B] flex items-center justify-center gap-1.5">
+                  <span>🔒 Thanh toán an toàn và bảo mật</span>
                 </div>
               </div>
             </aside>

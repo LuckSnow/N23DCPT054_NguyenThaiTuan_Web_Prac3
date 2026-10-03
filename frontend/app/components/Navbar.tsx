@@ -78,7 +78,7 @@ export default function Navbar({ onSearch }: { onSearch?: (query: string) => voi
               Danh mục
             </Link>
             <Link href="/#about">
-              Về chúng tôi
+              Giới thiệu
             </Link>
           </nav>
 
@@ -165,7 +165,7 @@ export default function Navbar({ onSearch }: { onSearch?: (query: string) => voi
               Danh mục
             </Link>
             <Link href="/#about" onClick={() => setMobileMenuOpen(false)}>
-              Về chúng tôi
+              Giới thiệu
             </Link>
             <Link href="/cart" onClick={() => setMobileMenuOpen(false)}>
               Giỏ hàng ({cart.totalQuantity})
