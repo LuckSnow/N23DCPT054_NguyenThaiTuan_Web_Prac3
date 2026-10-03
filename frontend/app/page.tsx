@@ -324,23 +324,25 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap gap-2.5 mb-8">
-            {['all', 'Thời trang', 'Giày dép', 'Túi xách', 'Phụ kiện'].map((c) => (
+          {/* Category Filter Tags (Ảnh 2: Thiết kế dạng pill hiện đại, khoảng cách thoáng đãng, không bị dính và thô sơ) */}
+          <div className="featured-cat-tags-row">
+            {[
+              { id: 'all', label: 'Tất cả danh mục' },
+              { id: 'Thời trang', label: 'Thời trang' },
+              { id: 'Giày dép', label: 'Giày dép' },
+              { id: 'Túi xách', label: 'Túi xách' },
+              { id: 'Phụ kiện', label: 'Phụ kiện' },
+            ].map((cat) => (
               <button
-                key={c}
+                key={cat.id}
                 type="button"
                 onClick={() => {
-                  setSelectedCategory(c);
+                  setSelectedCategory(cat.id);
                   setCurrentPage(1);
                 }}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                  selectedCategory === c
-                    ? 'bg-[#171717] text-white border-[#171717]'
-                    : 'bg-white text-[#171717] border-[#E5E5E5] hover:border-[#171717]'
-                }`}
+                className={`featured-cat-tag-btn ${selectedCategory === cat.id ? 'active' : ''}`}
               >
-                {c === 'all' ? 'Tất cả danh mục' : c}
+                {cat.label}
               </button>
             ))}
           </div>

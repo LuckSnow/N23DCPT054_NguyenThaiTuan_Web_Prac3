@@ -356,8 +356,8 @@ export default function ProductDetailPage() {
         </div>
 
         {/* REVIEWS SECTION */}
-        <section className="mt-20 pt-12 border-t border-[#E5E5E5]">
-          <h2 className="text-2xl font-bold text-[#171717] mb-8">Đánh giá sản phẩm</h2>
+        <section className="pdetail-reviews-section">
+          <h2 className="pdetail-reviews-title">Đánh giá sản phẩm</h2>
 
           <div className="reviews-summary-card">
             <div className="reviews-score-col">
@@ -386,35 +386,35 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Review Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="reviews-cards-grid">
             {customerReviews.map((rev) => (
               <div
                 key={rev.name}
-                className="bg-white p-6 rounded-2xl border border-[#E5E5E5] shadow-xs flex flex-col justify-between"
+                className="review-card-item"
               >
                 <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-full bg-[#171717] text-white flex items-center justify-center text-xs font-bold">
+                  <div className="review-card-header">
+                    <div className="review-card-avatar">
                       {rev.avatar}
                     </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#171717]">{rev.name}</h4>
-                      <div className="text-amber-500 text-xs">★★★★★</div>
+                    <div className="review-card-user">
+                      <h4 className="review-card-name">{rev.name}</h4>
+                      <div className="review-card-stars">★★★★★</div>
                     </div>
                   </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed mb-4">{rev.comment}</p>
+                  <p className="review-card-comment">{rev.comment}</p>
                 </div>
-                <span className="text-[11px] text-[#A3A3A3]">{rev.date}</span>
+                <span className="review-card-date">{rev.date}</span>
               </div>
             ))}
           </div>
         </section>
 
         {/* RELATED PRODUCTS */}
-        <section className="mt-20">
-          <div className="flex justify-between items-end mb-8">
-            <h2 className="text-2xl font-bold text-[#171717]">Có thể bạn sẽ thích</h2>
-            <Link href="/products" className="text-sm font-semibold text-[#171717] hover:underline">
+        <section className="pdetail-related-section">
+          <div className="pdetail-related-header">
+            <h2 className="pdetail-related-title">Có thể bạn sẽ thích</h2>
+            <Link href="/products" className="pdetail-related-link">
               Xem tất cả →
             </Link>
           </div>

@@ -145,6 +145,13 @@ export default function ProductsCatalogPage() {
       list = list.filter((p) => p.price > 700000);
     }
 
+    if (selectedSize !== 'all') {
+      list = list.filter((p) => {
+        const meta = getProductMeta(p);
+        return meta.sizes && meta.sizes.includes(selectedSize);
+      });
+    }
+
     if (sortBy === 'price-asc') {
       list.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'price-desc') {
@@ -154,7 +161,7 @@ export default function ProductsCatalogPage() {
     }
 
     return list;
-  }, [products, search, selectedCat, priceFilter, sortBy]);
+  }, [products, search, selectedCat, priceFilter, selectedSize, sortBy]);
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
   const paginatedProducts = useMemo(() => {
@@ -270,11 +277,11 @@ export default function ProductsCatalogPage() {
 
         {/* 2-Column Catalog: Filters Sidebar + Grid */}
         <div className="catalog-layout">
-          {/* Sidebar Filters */}
-          <aside className="filters-sidebar">
+          {/* Sidebar Filters with Modern White Card Design */}
+          <aside className="catalog-sidebar">
             <div className="filters-header">
               <h3>Bộ lọc tìm kiếm</h3>
-              <button type="button" onClick={clearFilters} className="clear-filters-btn">
+              <button type="button" onClick={clearFilters} className="clear-filters-link">
                 Xoá tất cả
               </button>
             </div>
@@ -284,52 +291,90 @@ export default function ProductsCatalogPage() {
               <h4 className="filter-title">Danh mục</h4>
               <ul className="filter-list">
                 {[
-                  { id: 'all', label: 'Tất cả' },
+                  { id: 'all', label: 'Tất cả sản phẩm' },
                   { id: 'Thời trang', label: 'Thời trang' },
                   { id: 'Giày dép', label: 'Giày dép' },
                   { id: 'Túi xách', label: 'Túi xách' },
                   { id: 'Phụ kiện', label: 'Phụ kiện' },
-                ].map((cat) => (
-                  <li key={cat.id}>
-                    <label className="filter-checkbox-label">
-                      <input
-                        type="radio"
-                        name="cat-radio"
-                        checked={selectedCat === cat.id}
-                        onChange={() => { setSelectedCat(cat.id); setCurrentPage(1); }}
-                      />
-                      <span>{cat.label}</span>
-                    </label>
-                  </li>
-                ))}
+                ].map((cat) => {
+                  const count =
+                    cat.id === 'all'
+                      ? products.length
+                      : products.filter((p) => {
+                          const m = getProductMeta(p);
+                          return m.category.toLowerCase() === cat.id.toLowerCase();
+                        }).length;
+
+                  return (
+                    <li key={cat.id}>
+                      <button
+                        type="button"
+                        className={`filter-item-btn ${selectedCat === cat.id ? 'active' : ''}`}
+                        onClick={() => {
+                          setSelectedCat(cat.id);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <span>{cat.label}</span>
+                        <span className="filter-count">({count})</span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
             {/* Price Filter */}
             <div className="filter-group">
-              <h4 className="filter-title">Mức giá</h4>
+              <h4 className="filter-title">Khoảng giá</h4>
               <ul className="filter-list">
                 {[
                   { id: 'all', label: 'Tất cả mức giá' },
                   { id: 'under300', label: 'Dưới 300.000₫' },
-                  { id: '300to500', label: '300.000₫ - 500.000₫' },
-                  { id: '500to700', label: '500.000₫ - 700.000₫' },
+                  { id: '300to500', label: '300.000₫ – 500.000₫' },
+                  { id: '500to700', label: '500.000₫ – 700.000₫' },
                   { id: 'above700', label: 'Trên 700.000₫' },
                 ].map((pf) => (
                   <li key={pf.id}>
-                    <label className="filter-checkbox-label">
-                      <input
-                        type="radio"
-                        name="price-radio"
-                        checked={priceFilter === pf.id}
-                        onChange={() => { setPriceFilter(pf.id); setCurrentPage(1); }}
-                      />
+                    <button
+                      type="button"
+                      className={`filter-item-btn ${priceFilter === pf.id ? 'active' : ''}`}
+                      onClick={() => {
+                        setPriceFilter(pf.id);
+                        setCurrentPage(1);
+                      }}
+                    >
                       <span>{pf.label}</span>
-                    </label>
+                      {priceFilter === pf.id && <span className="filter-check">✓</span>}
+                    </button>
                   </li>
                 ))}
               </ul>
             </div>
+
+            {/* Size Filter */}
+            <div className="filter-group">
+              <h4 className="filter-title">Kích cỡ</h4>
+              <div className="filter-size-grid">
+                {['S', 'M', 'L', 'XL', '39', '40', '41', '42'].map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    className={`filter-size-btn ${selectedSize === sz ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedSize(selectedSize === sz ? 'all' : sz);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {sz}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button type="button" className="clear-filters-btn" onClick={clearFilters}>
+              ✕ Xoá tất cả bộ lọc
+            </button>
           </aside>
 
           {/* Product Grid & Functional Pagination */}
