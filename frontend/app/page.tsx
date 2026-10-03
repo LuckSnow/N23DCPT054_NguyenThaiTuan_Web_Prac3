@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -10,6 +11,12 @@ export type Product = {
   id: number;
   name: string;
   price: number;
+};
+
+type CartResponse = {
+  items: Array<{ productId: number; quantity: number; subtotal: number }>;
+  totalQuantity: number;
+  totalPrice: number;
 };
 
 const imageOptions = [
@@ -80,6 +87,28 @@ export default function Home() {
     },
   });
 
+  // Nâng cao 4: Query giỏ hàng để cập nhật badge số lượng real-time
+  const { data: cartData = { items: [], totalQuantity: 0, totalPrice: 0 } } = useQuery<CartResponse>({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      const res = await api.get<CartResponse>('/api/cart');
+      return res.data;
+    },
+  });
+
+  // Nâng cao 4: Thêm vào giỏ hàng
+  const addToCartMutation = useMutation({
+    mutationFn: ({ productId, quantity = 1 }: { productId: number; quantity?: number }) =>
+      api.post('/api/cart', { productId, quantity }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('Đã thêm vào giỏ hàng!', { icon: '🛍️' });
+    },
+    onError: () => {
+      toast.error('Thêm vào giỏ hàng thất bại!');
+    },
+  });
+
   // Nâng cao 2: Mutation thêm sản phẩm
   const createMutation = useMutation({
     mutationFn: (newProd: { name: string; price: number }) => api.post<Product>('/api/products', newProd),
@@ -116,6 +145,7 @@ export default function Home() {
     mutationFn: (id: number) => api.delete(`/api/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success('Đã xoá sản phẩm', { icon: '🗑️' });
     },
     onError: () => {
@@ -143,7 +173,7 @@ export default function Home() {
   };
 
   const handleDelete = (id: number) => {
-    if (!window.confirm('Bạn chắc chắn muốn xoá?')) return;
+    if (!window.confirm('Bạn chắc chắn muốn xoá sản phẩm này?')) return;
     deleteMutation.mutate(id);
   };
 
@@ -181,14 +211,14 @@ export default function Home() {
       </div>
 
       <header className="site-header">
-        <a className="brand" href="/" aria-label="MỘC Studio — Trang chủ">
+        <Link className="brand" href="/" aria-label="MỘC Studio — Trang chủ">
           <span className="brand-mark">m.</span>
           <span className="brand-name">
             MỘC <span>STUDIO</span>
           </span>
-        </a>
+        </Link>
         <nav className="main-nav" aria-label="Điều hướng chính">
-          <a className="nav-active" href="/">Trang chủ</a>
+          <Link className="nav-active" href="/">Trang chủ</Link>
           <a href="#products">Sản phẩm</a>
           <a href="#story">Câu chuyện</a>
         </nav>
@@ -202,11 +232,11 @@ export default function Home() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </label>
-          <a className="cart-link" href="/cart" aria-label={`Giỏ hàng, ${products.length} sản phẩm`}>
+          <Link className="cart-link" href="/cart" aria-label={`Giỏ hàng, ${cartData.totalQuantity} sản phẩm`}>
             <ProductIcon type="bag" />
             <span>Giỏ hàng</span>
-            <b>{products.length}</b>
-          </a>
+            <b>{cartData.totalQuantity}</b>
+          </Link>
         </div>
       </header>
 
@@ -456,6 +486,16 @@ export default function Home() {
                         <ProductIcon type="close" />
                       </button>
                     </div>
+                    {/* Nâng cao 4: Nút Thêm vào giỏ nhanh */}
+                    <button
+                      className="quick-add"
+                      type="button"
+                      onClick={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
+                      aria-label={`Thêm ${product.name} vào giỏ hàng`}
+                      title="Thêm vào giỏ hàng"
+                    >
+                      ＋
+                    </button>
                   </div>
                   <div className="product-details">
                     <div>
@@ -468,9 +508,18 @@ export default function Home() {
                       {Number(product.price).toLocaleString('vi-VN')}₫
                     </span>
                   </div>
-                  <div className="product-rating">
-                    <span>★★★★★</span>
-                    <small>4.9 <i>·</i> Mộc mạc, dễ mặc</small>
+                  <div className="product-card-footer">
+                    <div className="product-rating">
+                      <span>★★★★★</span>
+                      <small>4.9 <i>·</i> Mộc mạc, dễ mặc</small>
+                    </div>
+                    <button
+                      className="add-to-cart-text-btn"
+                      type="button"
+                      onClick={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
+                    >
+                      Thêm giỏ hàng
+                    </button>
                   </div>
                 </article>
               );
@@ -511,12 +560,12 @@ export default function Home() {
       </section>
 
       <footer className="site-footer">
-        <a className="brand footer-brand" href="#home">
+        <Link className="brand footer-brand" href="/">
           <span className="brand-mark">m.</span>
           <span className="brand-name">
             MỘC <span>STUDIO</span>
           </span>
-        </a>
+        </Link>
         <span>Thời trang thường ngày, chọn lọc bằng cả sự dịu dàng.</span>
         <span>© 2026 MỘC STUDIO</span>
       </footer>

@@ -1,22 +1,25 @@
-[
-  {
-    "id": 1,
-    "name": "Áo thun basic Cotton",
-    "price": 150000
-  },
-  {
-    "id": 2,
-    "name": "Quần jeans slim-fit Indigo",
-    "price": 450000
-  },
-  {
-    "id": 3,
-    "name": "Áo sơ mi linen cổ trụ",
-    "price": 320000
-  },
-  {
-    "id": 4,
-    "name": "Áo khoác bomber thời trang",
-    "price": 590000
-  }
-]
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Áo thun basic Cotton",
+      "price": 150000
+    },
+    {
+      "id": 2,
+      "name": "Quần jeans slim-fit Indigo",
+      "price": 450000
+    },
+    {
+      "id": 3,
+      "name": "Áo sơ mi linen cổ trụ",
+      "price": 320000
+    },
+    {
+      "id": 4,
+      "name": "Áo khoác bomber thời trang",
+      "price": 590000
+    }
+  ],
+  "cart": []
+}
