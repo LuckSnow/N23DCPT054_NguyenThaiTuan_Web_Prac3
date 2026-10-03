@@ -131,7 +131,7 @@ export default function ProductDetailPage() {
       <Navbar />
 
       <main className="site-container flex-grow pb-28">
-        {/* 2. BREADCRUMB */}
+        {/* BREADCRUMB */}
         <nav className="breadcrumb-nav py-6" aria-label="Breadcrumb">
           <Link href="/">Home</Link>
           <span>/</span>
@@ -140,33 +140,28 @@ export default function ProductDetailPage() {
           <span className="text-[#171717] font-medium">{productName}</span>
         </nav>
 
-        {/* 3. MAIN PRODUCT SECTION (Two-column layout với khoảng cách rộng rãi, không bị dính) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20 items-start">
-          {/* LEFT COLUMN: Product image gallery */}
-          <div className="flex flex-col gap-5 pb-8">
-            {/* Main square image */}
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-white border border-[#E5E5E5] flex items-center justify-center p-4 shadow-sm">
+        {/* MAIN PRODUCT SECTION (Two-column layout với khoảng cách rộng rãi, không bị dính) */}
+        <div className="pdetail-layout">
+          {/* LEFT COLUMN: Gallery */}
+          <div className="pdetail-gallery-col">
+            <div className="pdetail-main-img-box">
               <Image
                 src={gallery[activeThumb] || gallery[0]}
                 alt={productName}
                 width={800}
                 height={800}
                 priority
-                className="w-full h-full object-cover rounded-xl transition-transform duration-300 hover:scale-105"
                 unoptimized
               />
             </div>
 
-            {/* 4 small thumbnail images */}
-            <div className="grid grid-cols-4 gap-3.5">
-              {gallery.map((thumbUrl, idx) => (
+            <div className="pdetail-thumbs-grid">
+              {gallery.slice(0, 4).map((thumbUrl, idx) => (
                 <button
                   key={`${thumbUrl}-${idx}`}
                   type="button"
                   onClick={() => setActiveThumb(idx)}
-                  className={`aspect-square rounded-xl overflow-hidden bg-white p-1.5 border-2 transition-all cursor-pointer ${
-                    activeThumb === idx ? 'border-[#171717] shadow-sm ring-1 ring-[#171717]' : 'border-[#E5E5E5] hover:border-[#8E8E8E]'
-                  }`}
+                  className={`pdetail-thumb-btn ${activeThumb === idx ? 'active' : ''}`}
                   aria-label={`Ảnh thumbnail ${idx + 1}`}
                 >
                   <Image
@@ -174,7 +169,6 @@ export default function ProductDetailPage() {
                     alt={`${productName} thumbnail ${idx + 1}`}
                     width={180}
                     height={180}
-                    className="w-full h-full object-cover rounded-lg"
                     unoptimized
                   />
                 </button>
@@ -183,48 +177,34 @@ export default function ProductDetailPage() {
           </div>
 
           {/* RIGHT COLUMN: Product Information */}
-          <div className="flex flex-col pt-1">
-            {/* Small Category Label */}
-            <span className="text-xs font-bold uppercase tracking-wider text-[#6B6B6B] mb-3">
-              {product.category}
-            </span>
+          <div className="pdetail-info-col">
+            <span className="pdetail-category">{product.category}</span>
+            <h1 className="pdetail-title">{productName}</h1>
 
-            {/* Large Product Title */}
-            <h1 className="text-3xl md:text-4xl font-extrabold text-[#171717] leading-tight mb-4">
-              {productName}
-            </h1>
-
-            {/* Rating Section */}
-            <div className="flex items-center gap-2.5 text-sm text-[#6B6B6B] mb-6">
-              <span className="text-amber-500 font-bold tracking-widest text-base">★★★★★</span>
-              <strong className="text-[#171717] font-semibold">{product.rating}</strong>
-              <span className="text-[#6B6B6B]">({product.reviewsCount} reviews)</span>
+            <div className="pdetail-rating-row">
+              <span className="pdetail-stars">★★★★★</span>
+              <strong className="text-[#171717]">{product.rating}</strong>
+              <span>({product.reviewsCount} reviews)</span>
             </div>
 
-            {/* Price Section */}
-            <div className="flex items-baseline gap-4 mb-6 pb-2">
-              <span className="text-3xl font-extrabold text-[#171717]">
+            <div className="pdetail-price-row">
+              <span className="pdetail-price-current">
                 {Number(productPrice).toLocaleString('vi-VN')}đ
               </span>
-              <span className="text-base text-[#A3A3A3] line-through">
+              <span className="pdetail-price-original">
                 {Number(originalPrice).toLocaleString('vi-VN')}đ
               </span>
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#FEF2F2] text-[#DC2626]">
-                -20%
-              </span>
+              <span className="pdetail-discount-badge">-20%</span>
             </div>
 
-            {/* 4. PRODUCT DESCRIPTION */}
-            <p className="text-sm text-[#6B6B6B] leading-relaxed mb-7 max-w-xl">
-              {product.description}
-            </p>
+            <p className="pdetail-description">{product.description}</p>
 
-            {/* 5. COLOR SELECTOR */}
-            <div className="mb-7">
-              <div className="text-sm font-semibold text-[#171717] mb-3">
+            {/* COLOR SELECTOR */}
+            <div className="pdetail-color-group">
+              <label className="pdetail-color-label">
                 Màu sắc: <span className="font-medium text-[#4A4A4A]">{selectedColor}</span>
-              </div>
-              <div className="flex items-center gap-3">
+              </label>
+              <div className="pdetail-color-options">
                 {product.colors.map((cName) => {
                   const isSelected = selectedColor === cName;
                   return (
@@ -232,11 +212,7 @@ export default function ProductDetailPage() {
                       key={cName}
                       type="button"
                       onClick={() => setSelectedColor(cName)}
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-[#171717] bg-[#171717] text-white shadow-sm'
-                          : 'border-[#E5E5E5] bg-white text-[#171717] hover:border-[#171717]'
-                      }`}
+                      className={`pdetail-color-btn ${isSelected ? 'active' : ''}`}
                     >
                       {cName}
                     </button>
@@ -245,13 +221,13 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* 6. SIZE SELECTOR */}
-            <div className="mb-7">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-semibold text-[#171717]">Kích thước</span>
+            {/* SIZE SELECTOR */}
+            <div className="pdetail-size-group">
+              <div className="pdetail-size-header">
+                <span className="pdetail-size-title">Kích thước</span>
                 <button
                   type="button"
-                  className="text-xs text-[#6B6B6B] hover:text-[#171717] underline cursor-pointer"
+                  className="pdetail-size-guide-btn"
                   onClick={() =>
                     toast(
                       'Bảng chọn size: Quần áo (S: <55kg, M: 55-65kg, L: 65-75kg, XL: >75kg) / Giày (39: 24.5cm, 40: 25cm, 41: 26cm, 42: 26.5cm, 43: 27.5cm)',
@@ -262,17 +238,13 @@ export default function ProductDetailPage() {
                   Hướng dẫn chọn size
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="pdetail-size-options">
                 {product.sizes.map((sz) => (
                   <button
                     key={sz}
                     type="button"
                     onClick={() => setSelectedSize(sz)}
-                    className={`min-w-12 h-11 px-4 rounded-xl text-sm font-semibold border transition-all cursor-pointer ${
-                      selectedSize === sz
-                        ? 'bg-[#171717] text-white border-[#171717] shadow-sm'
-                        : 'bg-white text-[#171717] border-[#E5E5E5] hover:border-[#171717]'
-                    }`}
+                    className={`pdetail-size-btn ${selectedSize === sz ? 'active' : ''}`}
                   >
                     {sz}
                   </button>
@@ -280,23 +252,23 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* 7. QUANTITY SELECTOR */}
-            <div className="mb-6">
-              <span className="text-sm font-semibold text-[#171717] block mb-2.5">Số lượng</span>
-              <div className="inline-flex items-center border border-[#E5E5E5] rounded-xl bg-white overflow-hidden shadow-2xs">
+            {/* QUANTITY SELECTOR */}
+            <div className="pdetail-qty-group">
+              <label className="pdetail-qty-label">Số lượng</label>
+              <div className="pdetail-qty-box">
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-11 h-11 flex items-center justify-center text-[#171717] hover:bg-[#F1F1EF] transition-colors cursor-pointer text-base font-medium"
+                  className="pdetail-qty-btn"
                   aria-label="Giảm số lượng"
                 >
                   －
                 </button>
-                <span className="w-12 text-center font-bold text-sm text-[#171717]">{quantity}</span>
+                <span className="pdetail-qty-val">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-11 h-11 flex items-center justify-center text-[#171717] hover:bg-[#F1F1EF] transition-colors cursor-pointer text-base font-medium"
+                  className="pdetail-qty-btn"
                   aria-label="Tăng số lượng"
                 >
                   ＋
@@ -304,13 +276,13 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* 8. ACTION BUTTONS */}
-            <div className="flex items-center gap-3.5 mb-10 pt-1">
+            {/* ACTION BUTTONS */}
+            <div className="pdetail-actions-row">
               <button
                 type="button"
                 onClick={() => addToCartMutation.mutate(quantity)}
                 disabled={addToCartMutation.isPending}
-                className="flex-1 h-13 rounded-xl bg-[#171717] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#2E2E2E] transition-all shadow-sm cursor-pointer"
+                className="pdetail-add-btn"
               >
                 {addToCartMutation.isPending ? 'Đang thêm...' : 'Thêm vào giỏ'}
               </button>
@@ -323,11 +295,7 @@ export default function ProductDetailPage() {
                     icon: isWishlist ? '♡' : '❤️',
                   });
                 }}
-                className={`w-13 h-13 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                  isWishlist
-                    ? 'border-[#E11D48] text-[#E11D48] bg-rose-50'
-                    : 'border-[#E5E5E5] bg-white text-[#171717] hover:border-[#171717]'
-                }`}
+                className={`pdetail-wishlist-btn ${isWishlist ? 'active' : ''}`}
                 aria-label="Thêm vào danh sách yêu thích"
                 title="Lưu vào yêu thích"
               >
@@ -344,8 +312,8 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            {/* 9. PRODUCT INFORMATION ACCORDIONS */}
-            <div className="border-t border-[#E5E5E5] pt-1">
+            {/* ACCORDIONS */}
+            <div className="pdetail-accordions">
               {[
                 {
                   id: 'desc',
@@ -365,11 +333,11 @@ export default function ProductDetailPage() {
                     'Giao hàng miễn phí toàn quốc cho đơn hàng từ 500.000₫. Hỗ trợ kiểm tra hàng trước khi thanh toán và đổi size miễn phí trong vòng 7 ngày.',
                 },
               ].map((acc) => (
-                <div key={acc.id} className="border-b border-[#E5E5E5] py-4.5">
+                <div key={acc.id} className="pdetail-accordion-item">
                   <button
                     type="button"
                     onClick={() => setOpenAccordion(openAccordion === acc.id ? null : acc.id)}
-                    className="w-full flex justify-between items-center text-left text-sm font-bold text-[#171717] cursor-pointer"
+                    className="pdetail-accordion-btn"
                   >
                     <span>{acc.title}</span>
                     <span className="text-base font-normal text-[#6B6B6B]">
@@ -377,7 +345,7 @@ export default function ProductDetailPage() {
                     </span>
                   </button>
                   {openAccordion === acc.id && (
-                    <div className="mt-3 text-xs text-[#6B6B6B] leading-relaxed pr-4">
+                    <div className="pdetail-accordion-content">
                       {acc.content}
                     </div>
                   )}
@@ -387,20 +355,18 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* 10. REVIEWS SECTION */}
+        {/* REVIEWS SECTION */}
         <section className="mt-20 pt-12 border-t border-[#E5E5E5]">
           <h2 className="text-2xl font-bold text-[#171717] mb-8">Đánh giá sản phẩm</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-white p-8 rounded-2xl border border-[#E5E5E5] mb-10 shadow-sm">
-            {/* Left side: Rating summary */}
-            <div className="flex flex-col items-center justify-center md:border-r md:border-[#E5E5E5] md:pr-6">
-              <span className="text-5xl font-black text-[#171717]">{product.rating} / 5</span>
-              <div className="text-amber-500 text-lg my-1.5 tracking-wider">★★★★★</div>
-              <span className="text-xs text-[#6B6B6B]">{product.reviewsCount} đánh giá</span>
+          <div className="reviews-summary-card">
+            <div className="reviews-score-col">
+              <span className="reviews-score-num">{product.rating} / 5</span>
+              <div className="reviews-score-stars">★★★★★</div>
+              <span className="reviews-score-count">{product.reviewsCount} đánh giá</span>
             </div>
 
-            {/* Right side: Breakdown */}
-            <div className="md:col-span-2 flex flex-col justify-center gap-2.5">
+            <div className="reviews-bars-col">
               {[
                 { star: 5, pct: '84%' },
                 { star: 4, pct: '11%' },
@@ -408,12 +374,12 @@ export default function ProductDetailPage() {
                 { star: 2, pct: '1%' },
                 { star: 1, pct: '1%' },
               ].map((r) => (
-                <div key={r.star} className="flex items-center gap-3 text-xs">
-                  <span className="w-6 font-medium text-[#171717]">{r.star} ★</span>
-                  <div className="flex-1 bg-[#F1F1EF] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#171717] h-full rounded-full" style={{ width: r.pct }} />
+                <div key={r.star} className="reviews-bar-row">
+                  <span className="reviews-bar-star">{r.star} ★</span>
+                  <div className="reviews-bar-track">
+                    <div className="reviews-bar-fill" style={{ width: r.pct }} />
                   </div>
-                  <span className="w-8 text-right text-[#6B6B6B]">{r.pct}</span>
+                  <span className="reviews-bar-pct">{r.pct}</span>
                 </div>
               ))}
             </div>
@@ -424,7 +390,7 @@ export default function ProductDetailPage() {
             {customerReviews.map((rev) => (
               <div
                 key={rev.name}
-                className="bg-white p-6 rounded-2xl border border-[#E5E5E5] shadow-sm flex flex-col justify-between"
+                className="bg-white p-6 rounded-2xl border border-[#E5E5E5] shadow-xs flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center gap-3 mb-3">
@@ -444,7 +410,7 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* 11. RELATED PRODUCTS (Click anywhere on card navigates to product detail) */}
+        {/* RELATED PRODUCTS */}
         <section className="mt-20">
           <div className="flex justify-between items-end mb-8">
             <h2 className="text-2xl font-bold text-[#171717]">Có thể bạn sẽ thích</h2>
@@ -459,7 +425,6 @@ export default function ProductDetailPage() {
                 className="modern-product-card"
                 key={item.id}
                 onClick={() => router.push(`/products/${item.id}`)}
-                style={{ cursor: 'pointer' }}
               >
                 <div className="product-img-box">
                   <Image

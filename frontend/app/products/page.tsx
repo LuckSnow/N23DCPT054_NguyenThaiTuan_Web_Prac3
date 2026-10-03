@@ -15,16 +15,14 @@ type Product = {
   id: number;
   name: string;
   price: number;
+  category?: string;
+  images?: string[];
+  description?: string;
+  colors?: string[];
+  sizes?: string[];
 };
 
-const sampleImages = [
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=720&q=80',
-  'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=720&q=80',
-  'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=720&q=80',
-  'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=720&q=80',
-  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=720&q=80',
-  'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?auto=format&fit=crop&w=720&q=80',
-];
+const ITEMS_PER_PAGE = 8;
 
 export default function ProductsCatalogPage() {
   const router = useRouter();
@@ -36,12 +34,24 @@ export default function ProductsCatalogPage() {
   const [selectedSize, setSelectedSize] = useState('all');
   const [selectedColor, setSelectedColor] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
   const [wishlist, setWishlist] = useState<number[]>([]);
 
-  // Lab 3: Edit modal state
+  // Create modal state
+  const [formOpen, setFormOpen] = useState(false);
+  const [createName, setCreateName] = useState('');
+  const [createPrice, setCreatePrice] = useState('');
+  const [createCategory, setCreateCategory] = useState('Thời trang');
+  const [createImageUrl, setCreateImageUrl] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+
+  // Edit modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editCategory, setEditCategory] = useState('Thời trang');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   // 1. Fetch products from Lab 3 API
   const { data: products = [], isLoading } = useQuery<Product[]>({
@@ -52,7 +62,7 @@ export default function ProductsCatalogPage() {
     },
   });
 
-  // 2. Add to Cart mutation
+  // 2. Add to Cart Mutation
   const addToCartMutation = useMutation({
     mutationFn: (productId: number) => api.post('/api/cart', { productId, quantity: 1 }),
     onSuccess: () => {
@@ -60,14 +70,32 @@ export default function ProductsCatalogPage() {
       toast.success('Đã thêm vào giỏ hàng!', { icon: '🛍️' });
     },
     onError: () => {
-      toast.error('Không thể thêm vào giỏ hàng!');
+      toast.error('Thêm vào giỏ thất bại!');
     },
   });
 
-  // 3. Edit product mutation (PUT)
+  // 3. Create Mutation
+  const createMutation = useMutation({
+    mutationFn: (newProd: { name: string; price: number; category: string; image?: string; description?: string }) =>
+      api.post<Product>('/api/products', newProd),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setCreateName('');
+      setCreatePrice('');
+      setCreateImageUrl('');
+      setCreateDescription('');
+      setFormOpen(false);
+      toast.success('Thêm sản phẩm mới thành công!');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Có lỗi xảy ra!');
+    },
+  });
+
+  // 4. Update Product Mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, name, price }: { id: number; name: string; price: number }) =>
-      api.put<Product>(`/api/products/${id}`, { name, price }),
+    mutationFn: ({ id, name, price, category, image, description }: { id: number; name: string; price: number; category: string; image?: string; description?: string }) =>
+      api.put<Product>(`/api/products/${id}`, { name, price, category, image, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setEditingProduct(null);
@@ -78,7 +106,7 @@ export default function ProductsCatalogPage() {
     },
   });
 
-  // 4. Delete product mutation (DELETE)
+  // 5. Delete Product Mutation
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/api/products/${id}`),
     onSuccess: () => {
@@ -87,11 +115,11 @@ export default function ProductsCatalogPage() {
       toast.success('Đã xoá sản phẩm', { icon: '🗑️' });
     },
     onError: () => {
-      toast.error('Xoá thất bại!');
+      toast.error('Xoá sản phẩm thất bại!');
     },
   });
 
-  // Filter & Sort
+  // Filtering & Sorting
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
@@ -100,14 +128,21 @@ export default function ProductsCatalogPage() {
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
 
-    if (priceFilter === 'under200') {
-      list = list.filter((p) => p.price < 200000);
-    } else if (priceFilter === '200to400') {
-      list = list.filter((p) => p.price >= 200000 && p.price <= 400000);
-    } else if (priceFilter === '400to600') {
-      list = list.filter((p) => p.price >= 400000 && p.price <= 600000);
-    } else if (priceFilter === 'above600') {
-      list = list.filter((p) => p.price > 600000);
+    if (selectedCat !== 'all') {
+      list = list.filter((p) => {
+        const meta = getProductMeta(p);
+        return meta.category.toLowerCase() === selectedCat.toLowerCase();
+      });
+    }
+
+    if (priceFilter === 'under300') {
+      list = list.filter((p) => p.price < 300000);
+    } else if (priceFilter === '300to500') {
+      list = list.filter((p) => p.price >= 300000 && p.price <= 500000);
+    } else if (priceFilter === '500to700') {
+      list = list.filter((p) => p.price >= 500000 && p.price <= 700000);
+    } else if (priceFilter === 'above700') {
+      list = list.filter((p) => p.price > 700000);
     }
 
     if (sortBy === 'price-asc') {
@@ -119,7 +154,13 @@ export default function ProductsCatalogPage() {
     }
 
     return list;
-  }, [products, search, priceFilter, sortBy]);
+  }, [products, search, selectedCat, priceFilter, sortBy]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
 
   const clearFilters = () => {
     setSelectedCat('all');
@@ -128,6 +169,7 @@ export default function ProductsCatalogPage() {
     setSelectedColor('all');
     setSearch('');
     setSortBy('newest');
+    setCurrentPage(1);
   };
 
   const toggleWishlist = (id: number) => {
@@ -138,6 +180,31 @@ export default function ProductsCatalogPage() {
       setWishlist([...wishlist, id]);
       toast.success('Đã lưu vào yêu thích!', { icon: '❤️' });
     }
+  };
+
+  const handleOpenEdit = (product: Product) => {
+    const meta = getProductMeta(product);
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditPrice(String(product.price));
+    setEditCategory(meta.category);
+    setEditImageUrl(meta.mainImage);
+    setEditDescription(meta.description);
+  };
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createName.trim() || Number(createPrice) <= 0) {
+      toast.error('Vui lòng nhập tên và giá hợp lệ!');
+      return;
+    }
+    createMutation.mutate({
+      name: createName.trim(),
+      price: Number(createPrice),
+      category: createCategory,
+      image: createImageUrl.trim() || undefined,
+      description: createDescription.trim() || undefined,
+    });
   };
 
   const handleUpdateSubmit = (e: React.FormEvent) => {
@@ -151,158 +218,137 @@ export default function ProductsCatalogPage() {
       id: editingProduct.id,
       name: editName.trim(),
       price: Number(editPrice),
+      category: editCategory,
+      image: editImageUrl.trim() || undefined,
+      description: editDescription.trim() || undefined,
     });
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F8F6]">
-      <Navbar onSearch={(q) => setSearch(q)} />
+      <Navbar onSearch={(q) => { setSearch(q); setCurrentPage(1); }} />
 
-      <main className="site-container flex-grow">
+      <main className="site-container flex-grow pb-24">
         {/* Header Breadcrumb & Title */}
         <div className="catalog-header">
           <nav className="breadcrumb-nav">
-            <Link href="/">Trang chủ</Link>
+            <Link href="/">Home</Link>
             <span>/</span>
-            <span>Sản phẩm</span>
+            <span>Tất cả sản phẩm</span>
           </nav>
-          <h1 className="catalog-title">Tất cả sản phẩm</h1>
-          <p className="section-subtitle">Khám phá bộ sưu tập phong cách sống đầy đủ từ MỘC Studio.</p>
-        </div>
-
-        {/* 2-Column Catalog Layout */}
-        <div className="catalog-layout">
-          {/* Left Sidebar Filter */}
-          <aside className="catalog-sidebar">
-            <div className="filter-group">
-              <h4>Danh mục</h4>
-              <ul className="filter-list">
-                {[
-                  { id: 'all', label: 'Tất cả sản phẩm' },
-                  { id: 'fashion', label: 'Thời trang' },
-                  { id: 'shoes', label: 'Giày dép' },
-                  { id: 'bags', label: 'Túi xách' },
-                  { id: 'accessories', label: 'Phụ kiện' },
-                ].map((cat) => (
-                  <li key={cat.id}>
-                    <button
-                      type="button"
-                      className={`filter-item-btn ${selectedCat === cat.id ? 'active' : ''}`}
-                      onClick={() => setSelectedCat(cat.id)}
-                    >
-                      <span>{cat.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+          <div className="catalog-title-row">
+            <div>
+              <h1 className="catalog-title">Bộ sưu tập sản phẩm</h1>
+              <p className="catalog-count">Hiển thị {filteredProducts.length} sản phẩm</p>
             </div>
 
-            <div className="filter-group">
-              <h4>Khoảng giá</h4>
-              <ul className="filter-list">
-                {[
-                  { id: 'all', label: 'Tất cả mức giá' },
-                  { id: 'under200', label: 'Dưới 200.000₫' },
-                  { id: '200to400', label: '200.000₫ – 400.000₫' },
-                  { id: '400to600', label: '400.000₫ – 600.000₫' },
-                  { id: 'above600', label: 'Trên 600.000₫' },
-                ].map((p) => (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      className={`filter-item-btn ${priceFilter === p.id ? 'active' : ''}`}
-                      onClick={() => setPriceFilter(p.id)}
-                    >
-                      <span>{p.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setFormOpen(true)}
+              >
+                ＋ Thêm sản phẩm mới
+              </button>
 
-            <div className="filter-group">
-              <h4>Kích cỡ</h4>
-              <ul className="filter-list">
-                {['XS', 'S', 'M', 'L', 'XL'].map((size) => (
-                  <li key={size}>
-                    <button
-                      type="button"
-                      className={`filter-item-btn ${selectedSize === size ? 'active' : ''}`}
-                      onClick={() => setSelectedSize(selectedSize === size ? 'all' : size)}
-                    >
-                      <span>Size {size}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="filter-group">
-              <h4>Màu sắc</h4>
-              <ul className="filter-list">
-                {[
-                  { id: 'black', label: 'Đen' },
-                  { id: 'white', label: 'Trắng' },
-                  { id: 'gray', label: 'Xám' },
-                  { id: 'blue', label: 'Xanh' },
-                  { id: 'brown', label: 'Nâu' },
-                ].map((color) => (
-                  <li key={color.id}>
-                    <button
-                      type="button"
-                      className={`filter-item-btn ${selectedColor === color.id ? 'active' : ''}`}
-                      onClick={() => setSelectedColor(selectedColor === color.id ? 'all' : color.id)}
-                    >
-                      <span>{color.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button type="button" className="clear-filters-btn" onClick={clearFilters}>
-              Xoá tất cả bộ lọc
-            </button>
-          </aside>
-
-          {/* Right Product Grid Area */}
-          <div className="catalog-main">
-            <div className="catalog-toolbar">
-              <span className="catalog-count">{filteredProducts.length} sản phẩm</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#6B6B6B]">Sắp xếp theo:</span>
+              <div className="sort-dropdown-wrap">
+                <label htmlFor="sort-select">Sắp xếp:</label>
                 <select
+                  id="sort-select"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="sort-select"
                 >
                   <option value="newest">Mới nhất</option>
-                  <option value="featured">Nổi bật</option>
-                  <option value="price-asc">Giá: Thấp đến Cao</option>
-                  <option value="price-desc">Giá: Cao đến Thấp</option>
+                  <option value="price-asc">Giá: Thấp đến cao</option>
+                  <option value="price-desc">Giá: Cao đến thấp</option>
                 </select>
               </div>
             </div>
+          </div>
+        </div>
 
+        {/* 2-Column Catalog: Filters Sidebar + Grid */}
+        <div className="catalog-layout">
+          {/* Sidebar Filters */}
+          <aside className="filters-sidebar">
+            <div className="filters-header">
+              <h3>Bộ lọc tìm kiếm</h3>
+              <button type="button" onClick={clearFilters} className="clear-filters-btn">
+                Xoá tất cả
+              </button>
+            </div>
+
+            {/* Category Filter */}
+            <div className="filter-group">
+              <h4 className="filter-title">Danh mục</h4>
+              <ul className="filter-list">
+                {[
+                  { id: 'all', label: 'Tất cả' },
+                  { id: 'Thời trang', label: 'Thời trang' },
+                  { id: 'Giày dép', label: 'Giày dép' },
+                  { id: 'Túi xách', label: 'Túi xách' },
+                  { id: 'Phụ kiện', label: 'Phụ kiện' },
+                ].map((cat) => (
+                  <li key={cat.id}>
+                    <label className="filter-checkbox-label">
+                      <input
+                        type="radio"
+                        name="cat-radio"
+                        checked={selectedCat === cat.id}
+                        onChange={() => { setSelectedCat(cat.id); setCurrentPage(1); }}
+                      />
+                      <span>{cat.label}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Price Filter */}
+            <div className="filter-group">
+              <h4 className="filter-title">Mức giá</h4>
+              <ul className="filter-list">
+                {[
+                  { id: 'all', label: 'Tất cả mức giá' },
+                  { id: 'under300', label: 'Dưới 300.000₫' },
+                  { id: '300to500', label: '300.000₫ - 500.000₫' },
+                  { id: '500to700', label: '500.000₫ - 700.000₫' },
+                  { id: 'above700', label: 'Trên 700.000₫' },
+                ].map((pf) => (
+                  <li key={pf.id}>
+                    <label className="filter-checkbox-label">
+                      <input
+                        type="radio"
+                        name="price-radio"
+                        checked={priceFilter === pf.id}
+                        onChange={() => { setPriceFilter(pf.id); setCurrentPage(1); }}
+                      />
+                      <span>{pf.label}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
+
+          {/* Product Grid & Functional Pagination */}
+          <div className="catalog-products-col">
             {isLoading ? (
               <div className="empty-box-state">
-                <p>Đang tải danh mục sản phẩm...</p>
+                <p>Đang tải dữ liệu sản phẩm...</p>
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="empty-box-state">
-                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" strokeWidth="1.5" className="mx-auto mb-3 text-neutral-400">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m16 16 4.5 4.5" />
-                </svg>
                 <h3>Không tìm thấy sản phẩm phù hợp</h3>
-                <p>Hãy thử thay đổi tiêu chí lọc hoặc tìm kiếm với từ khoá khác.</p>
-                <button type="button" className="btn-primary" onClick={clearFilters}>
+                <p>Thử đổi danh mục hoặc mức giá khác.</p>
+                <button type="button" onClick={clearFilters} className="btn-primary mt-4 inline-flex">
                   Xoá bộ lọc
                 </button>
               </div>
             ) : (
               <div className="products-grid-4">
-                {filteredProducts.map((product, idx) => {
+                {paginatedProducts.map((product, idx) => {
                   const meta = getProductMeta(product);
                   const isFavorite = wishlist.includes(product.id);
                   return (
@@ -310,7 +356,6 @@ export default function ProductsCatalogPage() {
                       className="modern-product-card"
                       key={product.id}
                       onClick={() => router.push(`/products/${product.id}`)}
-                      style={{ cursor: 'pointer' }}
                     >
                       <div className="product-img-box">
                         <Image
@@ -342,9 +387,7 @@ export default function ProductsCatalogPage() {
                             className="icon-action-pill btn-edit"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingProduct(product);
-                              setEditName(product.name);
-                              setEditPrice(String(product.price));
+                              handleOpenEdit(product);
                             }}
                             aria-label="Sửa"
                             title="Sửa sản phẩm"
@@ -375,9 +418,7 @@ export default function ProductsCatalogPage() {
 
                       <div className="product-card-body">
                         <span className="product-card-cat">{meta.category.toUpperCase()}</span>
-                        <div className="product-card-title">
-                          {product.name}
-                        </div>
+                        <div className="product-card-title">{product.name}</div>
                         <div className="product-price-row">
                           <span className="current-price">{Number(product.price).toLocaleString('vi-VN')}₫</span>
                           <span className="original-price">{Number(product.price * 1.25).toLocaleString('vi-VN')}₫</span>
@@ -406,21 +447,148 @@ export default function ProductsCatalogPage() {
               </div>
             )}
 
-            {/* Pagination */}
-            <div className="pagination-row">
-              <button type="button" className="page-num-btn">←</button>
-              <button type="button" className="page-num-btn active">1</button>
-              <button type="button" className="page-num-btn">2</button>
-              <button type="button" className="page-num-btn">3</button>
-              <button type="button" className="page-num-btn">→</button>
-            </div>
+            {/* REAL FUNCTIONAL PAGINATION NAVIGATION BUTTONS (Image 4) */}
+            {totalPages > 1 && (
+              <div className="pagination-row">
+                <button
+                  type="button"
+                  className="page-num-btn"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  aria-label="Trang trước"
+                >
+                  ←
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    className={`page-num-btn ${currentPage === pg ? 'active' : ''}`}
+                    onClick={() => setCurrentPage(pg)}
+                  >
+                    {pg}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="page-num-btn"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  aria-label="Trang sau"
+                >
+                  →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </main>
 
       <Footer />
 
-      {/* MODAL SỬA SẢN PHẨM (Lab 3 Nâng cao 1) */}
+      {/* MODAL THÊM SẢN PHẨM MỚI (Có ô thêm ảnh sản phẩm + danh mục + mô tả) */}
+      {formOpen && (
+        <>
+          <div className="modal-backdrop" onClick={() => setFormOpen(false)} />
+          <div className="modal-dialog-card">
+            <div className="modal-header">
+              <h3>Thêm sản phẩm mới</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setFormOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="modal-form-group">
+                <label>Tên sản phẩm *</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="Ví dụ: Giày sneaker thể thao Retro"
+                  className="modal-input"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="modal-form-group">
+                  <label>Giá bán (₫) *</label>
+                  <input
+                    type="number"
+                    required
+                    min="1000"
+                    placeholder="680000"
+                    className="modal-input"
+                    value={createPrice}
+                    onChange={(e) => setCreatePrice(e.target.value)}
+                  />
+                </div>
+
+                <div className="modal-form-group">
+                  <label>Danh mục *</label>
+                  <select
+                    className="modal-input cursor-pointer"
+                    value={createCategory}
+                    onChange={(e) => setCreateCategory(e.target.value)}
+                  >
+                    <option value="Thời trang">Thời trang</option>
+                    <option value="Giày dép">Giày dép</option>
+                    <option value="Túi xách">Túi xách</option>
+                    <option value="Phụ kiện">Phụ kiện</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Ô THÊM ẢNH SẢN PHẨM */}
+              <div className="modal-form-group">
+                <label>Link ảnh sản phẩm (Image URL)</label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  className="modal-input"
+                  value={createImageUrl}
+                  onChange={(e) => setCreateImageUrl(e.target.value)}
+                />
+                {createImageUrl && (
+                  <div className="modal-img-preview-box">
+                    <Image
+                      src={createImageUrl}
+                      alt="Ảnh xem trước"
+                      width={90}
+                      height={90}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-form-group">
+                <label>Mô tả sản phẩm</label>
+                <textarea
+                  rows={2}
+                  placeholder="Mô tả chất liệu, tính năng..."
+                  className="modal-input resize-none"
+                  value={createDescription}
+                  onChange={(e) => setCreateDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>
+                  Huỷ bỏ
+                </button>
+                <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? 'Đang lưu...' : 'Thêm sản phẩm'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* MODAL SỬA SẢN PHẨM (Có ô sửa ảnh sản phẩm + danh mục + mô tả) */}
       {editingProduct && (
         <>
           <div className="modal-backdrop" onClick={() => setEditingProduct(null)} />
@@ -433,7 +601,7 @@ export default function ProductsCatalogPage() {
             </div>
             <form onSubmit={handleUpdateSubmit}>
               <div className="modal-form-group">
-                <label>Tên sản phẩm</label>
+                <label>Tên sản phẩm *</label>
                 <input
                   type="text"
                   required
@@ -443,17 +611,69 @@ export default function ProductsCatalogPage() {
                   onChange={(e) => setEditName(e.target.value)}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="modal-form-group">
+                  <label>Giá bán (₫) *</label>
+                  <input
+                    type="number"
+                    required
+                    min="1000"
+                    className="modal-input"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                  />
+                </div>
+
+                <div className="modal-form-group">
+                  <label>Danh mục *</label>
+                  <select
+                    className="modal-input cursor-pointer"
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                  >
+                    <option value="Thời trang">Thời trang</option>
+                    <option value="Giày dép">Giày dép</option>
+                    <option value="Túi xách">Túi xách</option>
+                    <option value="Phụ kiện">Phụ kiện</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Ô SỬA ẢNH SẢN PHẨM */}
               <div className="modal-form-group">
-                <label>Giá bán (₫)</label>
+                <label>Link ảnh sản phẩm (Image URL)</label>
                 <input
-                  type="number"
-                  required
-                  min="1000"
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
                   className="modal-input"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
+                  value={editImageUrl}
+                  onChange={(e) => setEditImageUrl(e.target.value)}
+                />
+                {editImageUrl && (
+                  <div className="modal-img-preview-box">
+                    <Image
+                      src={editImageUrl}
+                      alt="Ảnh xem trước"
+                      width={90}
+                      height={90}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-form-group">
+                <label>Mô tả sản phẩm</label>
+                <textarea
+                  rows={2}
+                  className="modal-input resize-none"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
                 />
               </div>
+
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => setEditingProduct(null)}>
                   Huỷ bỏ

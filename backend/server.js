@@ -60,27 +60,32 @@ app.get('/api/products', async (req, res) => {
 
 // POST: Thêm sản phẩm mới (Tiết 2)
 app.post('/api/products', async (req, res) => {
-  const { name, price } = req.body;
+  const { name, price, category, image, description } = req.body;
   if (!name || !price) {
     return res.status(400).json({ error: 'Thiếu dữ liệu' });
   }
 
   try {
     const data = await readData();
+    const customImage = image && String(image).trim() ? String(image).trim() : null;
+    const imageList = customImage
+      ? [customImage, customImage, customImage, customImage]
+      : req.body.images || [
+          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1527719327859-c6ce80353573?auto=format&fit=crop&w=800&q=80'
+        ];
+
     const newProduct = {
       id: Date.now(),
       name: String(name).trim(),
       price: Number(price),
-      category: req.body.category || 'Thời trang',
-      images: req.body.images || [
-        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1527719327859-c6ce80353573?auto=format&fit=crop&w=800&q=80'
-      ],
-      description: req.body.description || 'Sản phẩm mới tuyển chọn từ MỘC Studio, thiết kế tinh tế và chất liệu cao cấp.',
-      colors: req.body.colors || ['Đen', 'Trắng'],
-      sizes: req.body.sizes || ['M', 'L', 'XL']
+      category: category ? String(category).trim() : 'Thời trang',
+      images: imageList,
+      description: description ? String(description).trim() : 'Sản phẩm mới tuyển chọn từ MỘC Studio, thiết kế tinh tế và chất liệu cao cấp.',
+      colors: req.body.colors || ['Đen', 'Trắng', 'Xám'],
+      sizes: req.body.sizes || (category === 'Giày dép' ? ['39', '40', '41', '42'] : ['S', 'M', 'L', 'XL'])
     };
     data.products.push(newProduct);
     await writeData(data);
@@ -93,7 +98,7 @@ app.post('/api/products', async (req, res) => {
 // PUT: Cập nhật thông tin sản phẩm (Nâng cao 1)
 app.put('/api/products/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { name, price, category, description } = req.body;
+  const { name, price, category, image, description } = req.body;
 
   try {
     const data = await readData();
@@ -103,12 +108,20 @@ app.put('/api/products/:id', async (req, res) => {
       return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
     }
 
+    const currentImages = data.products[index].images || [];
+    let updatedImages = currentImages;
+    if (image && String(image).trim()) {
+      const cleanImg = String(image).trim();
+      updatedImages = [cleanImg, ...(currentImages.slice(1).length > 0 ? currentImages.slice(1) : [cleanImg, cleanImg, cleanImg])];
+    }
+
     data.products[index] = {
       ...data.products[index],
       ...(name ? { name: String(name).trim() } : {}),
       ...(price !== undefined ? { price: Number(price) } : {}),
       ...(category ? { category: String(category).trim() } : {}),
       ...(description ? { description: String(description).trim() } : {}),
+      images: updatedImages,
     };
 
     await writeData(data);
