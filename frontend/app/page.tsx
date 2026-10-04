@@ -78,6 +78,59 @@ export default function HomePage() {
   const [email, setEmail] = useState('');
   const [wishlist, setWishlist] = useState<number[]>([]);
 
+  // Helper tải ảnh từ máy tính chuyển đổi sang Base64 Data URL
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file hình ảnh (PNG, JPG, WEBP)!');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawData = event.target?.result as string;
+      const img = document.createElement('img');
+      img.onload = () => {
+        try {
+          const maxDim = 1200;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, w, h);
+          const optimized = canvas.toDataURL('image/jpeg', 0.88);
+          setter(optimized);
+          toast.success('Đã tải ảnh từ máy thành công!', { icon: '🖼️' });
+        } catch {
+          setter(rawData);
+          toast.success('Đã tải ảnh từ máy thành công!', { icon: '🖼️' });
+        }
+      };
+      img.onerror = () => {
+        setter(rawData);
+        toast.success('Đã tải ảnh từ máy thành công!', { icon: '🖼️' });
+      };
+      img.src = rawData;
+    };
+    reader.onerror = () => {
+      toast.error('Không thể đọc file ảnh từ thiết bị!');
+    };
+    reader.readAsDataURL(file);
+  };
+
   // 1. Fetch danh sách sản phẩm (TanStack Query)
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
@@ -114,7 +167,8 @@ export default function HomePage() {
       toast.success('Thêm sản phẩm thành công!');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error || 'Có lỗi xảy ra!');
+      const msg = err.response?.data?.error || err.message || 'Thêm sản phẩm thất bại!';
+      toast.error(`Lỗi: ${msg}`);
     },
   });
 
@@ -128,7 +182,8 @@ export default function HomePage() {
       toast.success('Cập nhật sản phẩm thành công!');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error || 'Cập nhật thất bại!');
+      const msg = err.response?.data?.error || err.message || 'Cập nhật thất bại!';
+      toast.error(`Lỗi: ${msg}`);
     },
   });
 
@@ -217,16 +272,6 @@ export default function HomePage() {
       setWishlist([...wishlist, id]);
       toast.success('Đã lưu vào yêu thích!', { icon: '❤️' });
     }
-  };
-
-  const handleNewsletterSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) {
-      toast.error('Vui lòng nhập email hợp lệ!');
-      return;
-    }
-    toast.success('Đăng ký nhận tin thành công! Cảm ơn bạn.', { icon: '💌' });
-    setEmail('');
   };
 
   return (
@@ -569,25 +614,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 7. NEWSLETTER */}
-        <section className="newsletter-section site-container">
-          <div className="newsletter-card">
-            <h2>Đăng ký nhận ưu đãi độc quyền</h2>
-            <p>Nhận ngay mã giảm 15% cho đơn hàng đầu tiên và cập nhật bộ sưu tập mới nhất.</p>
-            <form onSubmit={handleNewsletterSubmit} className="newsletter-form">
-              <input
-                type="email"
-                placeholder="Nhập địa chỉ email của bạn..."
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="newsletter-input"
-              />
-              <button type="submit" className="btn-primary whitespace-nowrap">
-                Đăng ký ngay
-              </button>
-            </form>
-          </div>
-        </section>
       </main>
 
       <Footer />
@@ -646,25 +672,62 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Ô THÊM ẢNH SẢN PHẨM */}
+              {/* Ô THÊM ẢNH TỪ MÁY TÍNH */}
               <div className="modal-form-group">
-                <label>Link ảnh sản phẩm (Image URL)</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  className="modal-input"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                />
-                {imageUrl && (
-                  <div className="modal-img-preview-box">
-                    <Image
-                      src={imageUrl}
-                      alt="Ảnh xem trước"
-                      width={90}
-                      height={90}
-                      className="w-full h-full object-cover"
-                      unoptimized
+                <label>Ảnh sản phẩm (Tải lên từ máy)</label>
+                <label className="modal-file-upload-box">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageFileChange(e, setImageUrl)}
+                  />
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#6B6B6B" strokeWidth="1.6">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span className="text-xs font-semibold text-[#171717]">
+                    Nhấn để chọn ảnh từ máy tính
+                  </span>
+                  <span className="text-[11px] text-[#8C8C8C]">
+                    Hỗ trợ định dạng PNG, JPG, JPEG, WEBP
+                  </span>
+                </label>
+
+                {imageUrl ? (
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className="modal-file-preview-wrap">
+                      <Image
+                        src={imageUrl}
+                        alt="Ảnh xem trước"
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                      <button
+                        type="button"
+                        className="modal-file-remove-btn"
+                        onClick={() => setImageUrl('')}
+                        title="Xoá ảnh này"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div>
+                      <span className="text-xs text-[#10B981] font-semibold block">✓ Đã tải ảnh từ máy tính</span>
+                      <span className="text-[11px] text-[#6B6B6B]">Ảnh đã sẵn sàng để lưu cùng sản phẩm</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <input
+                      type="url"
+                      placeholder="Hoặc dán link ảnh trực tiếp (nếu có)..."
+                      className="modal-input text-xs"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
                     />
                   </div>
                 )}
@@ -746,25 +809,62 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Ô CHỈNH SỬA ẢNH SẢN PHẨM */}
+              {/* Ô CHỈNH SỬA ẢNH SẢN PHẨM TỪ MÁY */}
               <div className="modal-form-group">
-                <label>Link ảnh sản phẩm (Image URL)</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  className="modal-input"
-                  value={editImageUrl}
-                  onChange={(e) => setEditImageUrl(e.target.value)}
-                />
-                {editImageUrl && (
-                  <div className="modal-img-preview-box">
-                    <Image
-                      src={editImageUrl}
-                      alt="Ảnh xem trước"
-                      width={90}
-                      height={90}
-                      className="w-full h-full object-cover"
-                      unoptimized
+                <label>Ảnh sản phẩm (Tải lên từ máy)</label>
+                <label className="modal-file-upload-box">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageFileChange(e, setEditImageUrl)}
+                  />
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#6B6B6B" strokeWidth="1.6">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span className="text-xs font-semibold text-[#171717]">
+                    Nhấn để chọn ảnh mới từ máy tính
+                  </span>
+                  <span className="text-[11px] text-[#8C8C8C]">
+                    Hỗ trợ định dạng PNG, JPG, JPEG, WEBP
+                  </span>
+                </label>
+
+                {editImageUrl ? (
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className="modal-file-preview-wrap">
+                      <Image
+                        src={editImageUrl}
+                        alt="Ảnh xem trước"
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                      <button
+                        type="button"
+                        className="modal-file-remove-btn"
+                        onClick={() => setEditImageUrl('')}
+                        title="Xoá ảnh này"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div>
+                      <span className="text-xs text-[#10B981] font-semibold block">✓ Ảnh hiển thị sẵn sàng</span>
+                      <span className="text-[11px] text-[#6B6B6B]">Bấm vào khung trên nếu muốn đổi ảnh khác</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <input
+                      type="url"
+                      placeholder="Hoặc dán link ảnh trực tiếp (nếu có)..."
+                      className="modal-input text-xs"
+                      value={editImageUrl}
+                      onChange={(e) => setEditImageUrl(e.target.value)}
                     />
                   </div>
                 )}
