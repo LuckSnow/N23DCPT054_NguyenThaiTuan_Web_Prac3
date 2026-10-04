@@ -4,13 +4,14 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type'],
+  credentials: true,
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
