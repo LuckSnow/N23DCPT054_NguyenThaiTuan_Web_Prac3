@@ -36,6 +36,7 @@ export default function ProductsCatalogPage() {
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [wishlist, setWishlist] = useState<number[]>([]);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // Create modal state
   const [formOpen, setFormOpen] = useState(false);
@@ -330,15 +331,42 @@ export default function ProductsCatalogPage() {
           </div>
         </div>
 
+        {/* Nút bấm mở bộ lọc nhanh trên Mobile & Tablet */}
+        <div className="mobile-filter-bar">
+          <button
+            type="button"
+            className="mobile-filter-toggle-btn"
+            onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+            <span>{mobileFilterOpen ? 'Ẩn bộ lọc' : 'Bộ lọc tìm kiếm'}</span>
+            {(selectedCat !== 'all' || priceFilter !== 'all' || selectedSize !== 'all') && (
+              <span className="mobile-filter-badge">●</span>
+            )}
+          </button>
+        </div>
+
         {/* 2-Column Catalog: Filters Sidebar + Grid */}
         <div className="catalog-layout">
           {/* Sidebar Filters with Modern White Card Design */}
-          <aside className="catalog-sidebar">
+          <aside className={`catalog-sidebar ${mobileFilterOpen ? 'mobile-open' : ''}`}>
             <div className="filters-header">
               <h3>Bộ lọc tìm kiếm</h3>
-              <button type="button" onClick={clearFilters} className="clear-filters-link">
-                Xoá tất cả
-              </button>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={clearFilters} className="clear-filters-link">
+                  Xoá tất cả
+                </button>
+                <button
+                  type="button"
+                  className="mobile-filter-close-btn"
+                  onClick={() => setMobileFilterOpen(false)}
+                  aria-label="Đóng bộ lọc"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Category Filter */}
@@ -429,6 +457,14 @@ export default function ProductsCatalogPage() {
 
             <button type="button" className="clear-filters-btn" onClick={clearFilters}>
               ✕ Xoá tất cả bộ lọc
+            </button>
+
+            <button
+              type="button"
+              className="btn-primary mobile-apply-filter-btn"
+              onClick={() => setMobileFilterOpen(false)}
+            >
+              Xem kết quả ({filteredProducts.length} sản phẩm)
             </button>
           </aside>
 

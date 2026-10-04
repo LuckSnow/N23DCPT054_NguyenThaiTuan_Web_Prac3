@@ -1479,14 +1479,55 @@ button, input, select, textarea {
     grid-template-columns: 1fr;
     gap: 32px;
   }
+  /* Catalog layout on Tablet & Mobile */
   .catalog-layout {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .mobile-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
   }
   .catalog-sidebar {
     display: none;
+    position: static;
   }
+  .catalog-sidebar.mobile-open {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+    margin-bottom: 24px;
+  }
+  .mobile-filter-close-btn {
+    display: inline-flex;
+  }
+  .mobile-apply-filter-btn {
+    display: flex;
+    width: 100%;
+    margin-top: 14px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+  .catalog-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .catalog-title-row > div:last-child {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Cart Layout on Tablet & Mobile */
   .cart-layout {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
   .cart-table-header {
     display: none;
@@ -1502,19 +1543,38 @@ button, input, select, textarea {
     display: none;
   }
   .cart-item-modern {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    grid-template-rows: auto auto;
+    gap: 14px 18px;
+    padding: 18px;
+    align-items: start;
   }
   .cart-item-media {
-    width: 100%;
-    height: 160px;
+    width: 96px;
+    height: 96px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .cart-item-center {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 3px;
   }
   .cart-item-right-actions {
-    width: 100%;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    margin-top: 14px;
-    padding-top: 12px;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 14px;
     border-top: 1px solid var(--border-color);
+  }
+  .cart-item-total-col {
+    min-width: auto;
+    text-align: left;
   }
 }
 
@@ -2673,6 +2733,52 @@ button, input, select, textarea {
   padding-bottom: 80px;
 }
 
+/* Mobile Filter Bar & Drawer Controls */
+.mobile-filter-bar {
+  display: none;
+}
+
+.mobile-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.mobile-filter-toggle-btn:hover {
+  background-color: var(--hover-bg);
+  border-color: #171717;
+}
+
+.mobile-filter-badge {
+  color: #2563EB;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.mobile-filter-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.mobile-apply-filter-btn {
+  display: none;
+}
+
 .catalog-sidebar {
   background-color: #FFFFFF;
   border: 1px solid var(--border-color);
@@ -3031,6 +3137,401 @@ button, input, select, textarea {
 
 .modal-file-remove-btn:hover {
   background: #E11D48;
+}
+
+/* ==========================================================================
+   TOÀN DIỆN HỆ THỐNG GIAO DIỆN RESPONSIVE (MOBILE & TABLET OPTIMIZATIONS)
+   ========================================================================== */
+
+/* 1. MÀN HÌNH TABLET & PHABLET (max-width: 768px) */
+@media (max-width: 768px) {
+  .site-container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  /* Catalog Top Bar & Controls */
+  .catalog-header {
+    margin-bottom: 24px;
+  }
+  .catalog-title {
+    font-size: 28px;
+    line-height: 1.25;
+  }
+  
+  /* Product Detail Page */
+  .pdetail-layout {
+    gap: 32px;
+  }
+  .pdetail-main-img-box {
+    max-height: 440px;
+  }
+  .pdetail-title {
+    font-size: 26px;
+    line-height: 1.3;
+  }
+  .reviews-summary-card {
+    padding: 24px 20px;
+    gap: 24px;
+  }
+  .reviews-score-num {
+    font-size: 42px;
+  }
+  .reviews-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* 2. MÀN HÌNH DI ĐỘNG (max-width: 640px) */
+@media (max-width: 640px) {
+  .site-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Header & Navigation */
+  .header-inner {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .logo-text {
+    font-size: 15px;
+  }
+  .logo-mark {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+  .header-actions-group {
+    gap: 8px;
+  }
+  .action-icon-btn,
+  .cart-badge-link {
+    width: 36px;
+    height: 36px;
+  }
+  .cart-count-pill {
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+
+  /* Mobile Search Overlay */
+  .header-search-form {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    background-color: #FFFFFF;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 16px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-search-form .search-input-field {
+    width: 100%;
+    font-size: 14px;
+    padding: 8px 0;
+  }
+  .search-close-btn {
+    padding: 8px;
+    font-size: 16px;
+  }
+
+  /* Hero Section */
+  .hero-section-modern {
+    padding-top: 16px;
+    padding-bottom: 32px;
+  }
+  .hero-content {
+    padding: 28px 20px;
+  }
+  .hero-badge {
+    margin-bottom: 16px;
+    font-size: 10.5px;
+    padding: 5px 12px;
+  }
+  .hero-headline {
+    font-size: 28px;
+    line-height: 1.32;
+    margin-bottom: 14px;
+  }
+  .hero-subtext {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .hero-cta-group {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  .hero-cta-group a,
+  .hero-cta-group button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  .hero-image-wrap {
+    min-height: 240px;
+    height: 260px;
+  }
+
+  /* Featured Category Tags: Vuốt ngang mượt mà trên điện thoại */
+  .featured-cat-tags-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+  }
+  .featured-cat-tags-row::-webkit-scrollbar {
+    display: none;
+  }
+  .featured-cat-tag-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 8px 16px;
+    font-size: 12.5px;
+  }
+
+  /* Section Headers */
+  .section-header-modern {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-size: 22px;
+  }
+  .section-subtitle {
+    font-size: 13px;
+  }
+
+  /* Cart Items on Mobile: Giao diện thẻ 2 hàng tối ưu không bị tràn */
+  .cart-item-modern {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px 14px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .cart-item-media {
+    width: 84px;
+    height: 84px;
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 10px;
+  }
+  .cart-item-center {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 2px;
+  }
+  .cart-item-name {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+  .cart-item-variants {
+    font-size: 11px;
+    gap: 6px;
+  }
+  .cart-item-unit-price {
+    font-size: 12px;
+  }
+  .cart-item-right-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+  }
+  .cart-qty-btn {
+    width: 30px;
+    height: 32px;
+    font-size: 13px;
+  }
+  .cart-qty-val {
+    width: 28px;
+    font-size: 12.5px;
+  }
+  .cart-item-total-price {
+    font-size: 14.5px;
+  }
+
+  /* Cart Summary & Coupon Form */
+  .cart-summary-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .promo-form-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .promo-apply-btn {
+    width: 100%;
+    justify-content: center;
+    height: 42px;
+  }
+
+  /* Product Detail Page on Mobile */
+  .pdetail-main-img-box {
+    max-height: 340px;
+    padding: 8px;
+    border-radius: 14px;
+  }
+  .pdetail-thumbs-grid {
+    gap: 8px;
+  }
+  .pdetail-thumb-btn {
+    border-radius: 8px;
+    padding: 4px;
+  }
+  .pdetail-title {
+    font-size: 22px;
+    line-height: 1.3;
+  }
+  .pdetail-price-current {
+    font-size: 24px;
+  }
+  .pdetail-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pdetail-add-btn {
+    height: 48px;
+    font-size: 14px;
+  }
+  .pdetail-wishlist-btn {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+
+  /* Modals: Cuộn mượt mà trên điện thoại, không bao giờ bị cắt tràn màn hình */
+  .modal-dialog-card {
+    width: min(94vw, 480px);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .modal-header {
+    margin-bottom: 16px;
+  }
+  .modal-header h3 {
+    font-size: 18px;
+  }
+  .modal-input {
+    font-size: 13.5px;
+    padding: 10px 12px;
+  }
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
+    height: 44px;
+  }
+}
+
+/* 3. MÀN HÌNH ĐIỆN THOẠI NHỎ (max-width: 480px) */
+@media (max-width: 480px) {
+  /* Ẩn bớt nút user khi màn hình quá hẹp để nhường chỗ cho logo và giỏ hàng */
+  .user-btn {
+    display: none;
+  }
+
+  /* Lưới sản phẩm: 2 cột gọn gàng tiêu chuẩn sàn thương mại điện tử */
+  .products-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .modern-product-card {
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .product-img-box {
+    border-radius: 10px;
+  }
+  .product-card-title {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .product-card-price {
+    font-size: 14px;
+  }
+  .add-to-cart-quick-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  /* Categories Grid trên Mobile nhỏ */
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .category-card {
+    height: 140px;
+    border-radius: 14px;
+  }
+  .category-overlay {
+    padding: 12px;
+  }
+  .category-overlay h3 {
+    font-size: 15px;
+  }
+  .category-overlay span {
+    font-size: 11px;
+  }
+
+  /* Promo Banner */
+  .promo-banner-content {
+    padding: 24px 18px;
+  }
+  .promo-banner-content h2 {
+    font-size: 20px;
+  }
+  .promo-banner-content p {
+    font-size: 13px;
+  }
+  .promo-banner-img {
+    height: 180px;
+  }
+
+  /* Modal Form Grid Fields (Price & Category stack) */
+  .modal-form-group .grid-cols-2,
+  .modal-dialog-card .grid.grid-cols-2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Pagination Bar */
+  .pagination-row {
+    gap: 6px;
+  }
+  .page-num-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
 }
 
 
